@@ -5,8 +5,6 @@ import Sidebar from './components/Layout/Sidebar'
 import Dashboard from './components/Dashboard/Dashboard'
 import ModulePlayer from './components/Training/ModulePlayer'
 
-// inside the <main> block, replace the module placeholder:
-{ state.view === 'module' && <ModulePlayer /> }
 export default function App() {
   const { state, dispatch } = useTrainer()
 
@@ -53,7 +51,7 @@ export default function App() {
         <Sidebar />
         <main style={{ flex: 1, overflowY: 'auto', background: 'var(--oracle-silver)' }}>
           {state.view === 'dashboard' && <Dashboard />}
-          {state.view === 'module' && <div style={{ padding: 'var(--space-xl)', color: 'var(--oracle-text-light)' }}>Module Player — coming next</div>}
+          {state.view === 'module' && <ModulePlayer />}
           {state.view === 'scenario' && <div style={{ padding: 'var(--space-xl)', color: 'var(--oracle-text-light)' }}>Scenario Player — coming next</div>}
         </main>
       </div>
