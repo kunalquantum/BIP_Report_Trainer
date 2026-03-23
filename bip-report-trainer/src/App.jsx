@@ -3,7 +3,10 @@ import { useTrainer } from './context/TrainerContext'
 import TopNav from './components/Layout/TopNav'
 import Sidebar from './components/Layout/Sidebar'
 import Dashboard from './components/Dashboard/Dashboard'
+import ModulePlayer from './components/Training/ModulePlayer'
 
+// inside the <main> block, replace the module placeholder:
+{ state.view === 'module' && <ModulePlayer /> }
 export default function App() {
   const { state, dispatch } = useTrainer()
 
