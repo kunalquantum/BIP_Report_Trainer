@@ -1,0 +1,78 @@
+@import url('https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@300;400;600;700&display=swap');
+
+:root {
+  --oracle-red: #C74634;
+  --oracle-red-dark: #A3361F;
+  --oracle-red-light: #E85D45;
+  --oracle-navy: #1A2B4A;
+  --oracle-navy-mid: #243657;
+  --oracle-navy-light: #2E4470;
+  --oracle-silver: #F2F4F7;
+  --oracle-silver-mid: #D8DDE6;
+  --oracle-silver-dark: #A0AAB8;
+  --oracle-white: #FFFFFF;
+  --oracle-text: #1A1A24;
+  --oracle-text-light: #4A5568;
+  --oracle-accent: #00A3E0;
+  --oracle-success: #2E7D32;
+  --oracle-warning: #E65100;
+
+  --font-primary: 'Source Sans 3', 'Segoe UI', sans-serif;
+  --font-mono: 'Courier New', monospace;
+
+  --shadow-card: 0 2px 8px rgba(26, 43, 74, 0.10);
+  --shadow-hover: 0 4px 16px rgba(26, 43, 74, 0.18);
+  --shadow-modal: 0 8px 32px rgba(26, 43, 74, 0.28);
+
+  --border-default: 1px solid var(--oracle-silver-mid);
+  --radius-sm: 3px;
+  --radius-md: 6px;
+  --radius-lg: 10px;
+
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+  --space-2xl: 48px;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-primary);
+  background: var(--oracle-silver);
+  color: var(--oracle-text);
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+button {
+  font-family: var(--font-primary);
+  cursor: pointer;
+}
+
+/* Scrollbar styling (subtle Oracle feel) */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--oracle-silver);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--oracle-silver-dark);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--oracle-navy-light);
+}
