@@ -2,9 +2,58 @@ import { useEffect, useMemo, useState } from 'react'
 import { useTrainer } from './context/TrainerContext'
 import { BIP_MODULES } from './data/modules'
 import { SCENARIOS } from './data/scenarios'
+import { DOMAIN_BLUEPRINTS } from './data/foundations'
 import { getNextLevel, getProgressToNext } from './data/levels'
 import { executeSQL, extractBindVariables } from './engine/sqlEngine'
 import { validateScenarioTask } from './engine/taskValidator'
+
+const DOMAIN_OPTIONS = ['All', 'AP', 'AR', 'GL']
+
+const DOMAIN_SCHEMAS = {
+  AP: {
+    label: 'Accounts Payable',
+    folders: ['Shared Folders', 'Financials', 'AP', 'Invoices', 'Supplier Statements'],
+    objects: ['AP Invoice Register.xdo', 'Supplier Aging.xdm', 'Payment Batch Layout.rtf']
+  },
+  AR: {
+    label: 'Accounts Receivable',
+    folders: ['Shared Folders', 'Financials', 'AR', 'Collections', 'Customer Statements'],
+    objects: ['AR Customer Balance.xdo', 'Receipts Analysis.xdm', 'Collections Summary.rtf']
+  },
+  GL: {
+    label: 'General Ledger',
+    folders: ['Shared Folders', 'Financials', 'GL', 'Journals', 'Trial Balance'],
+    objects: ['GL Trial Balance.xdo', 'Journal Extract.xdm', 'Balance Sheet Layout.rtf']
+  }
+}
+
+const PANEL_ROLES = [
+  'Functional Expert',
+  'SQL Expert',
+  'BIP Developer',
+  'Debug Specialist'
+]
+
+const DOMAIN_STARTERS = {
+  AP: {
+    reportName: 'AP Invoice Aging',
+    filters: 'BU, Invoice Date, Supplier, Aging Bucket',
+    output: 'Excel',
+    knownTables: 'AP_INVOICES_ALL, AP_PAYMENT_SCHEDULES_ALL, AP_SUPPLIERS'
+  },
+  AR: {
+    reportName: 'AR Customer Aging',
+    filters: 'BU, Customer, As Of Date',
+    output: 'Excel',
+    knownTables: 'RA_CUSTOMER_TRX_ALL, AR_PAYMENT_SCHEDULES_ALL, HZ_CUST_ACCOUNTS'
+  },
+  GL: {
+    reportName: 'GL Trial Balance',
+    filters: 'Ledger, Period, Account Range',
+    output: 'Excel / PDF',
+    knownTables: 'GL_BALANCES, GL_CODE_COMBINATIONS, GL_LEDGERS'
+  }
+}
 
 function getStarterSql(id) {
   const starters = {
@@ -31,7 +80,8 @@ function getCoachNotes(scenario) {
 }
 
 export default function App() {
-  const { state, dispatch, level, isScenarioDone, isModuleDone, isModuleLocked } = useTrainer()
+  const { state, dispatch, level, isScenarioDone } = useTrainer()
+  const [domainFilter, setDomainFilter] = useState('All')
 
   useEffect(() => {
     if (!state.notification) return
@@ -47,7 +97,11 @@ export default function App() {
         {state.currentScenario ? (
           <ScenarioWorkspace />
         ) : (
-          <Dashboard isScenarioDone={isScenarioDone} isModuleDone={isModuleDone} isModuleLocked={isModuleLocked} />
+          <Dashboard
+            domainFilter={domainFilter}
+            setDomainFilter={setDomainFilter}
+            isScenarioDone={isScenarioDone}
+          />
         )}
       </main>
     </div>
@@ -87,18 +141,26 @@ function Header({ level }) {
   )
 }
 
-function Dashboard({ isScenarioDone, isModuleDone, isModuleLocked }) {
+function Dashboard({ domainFilter, setDomainFilter, isScenarioDone }) {
   const { state, dispatch, level } = useTrainer()
+  const filteredScenarios = domainFilter === 'All'
+    ? SCENARIOS
+    : SCENARIOS.filter((scenario) => scenario.domain === domainFilter)
+  const highlightedDomain = domainFilter === 'All' ? 'GL' : domainFilter
+  const blueprint = DOMAIN_BLUEPRINTS[highlightedDomain] || DOMAIN_BLUEPRINTS.GL
+  const domainModules = DOMAIN_OPTIONS.filter((item) => item !== 'All')
+  const featuredScenario = filteredScenarios[0] || null
+  const starter = DOMAIN_STARTERS[highlightedDomain] || DOMAIN_STARTERS.GL
 
   return (
-    <div style={{ display: 'grid', gap: '24px' }}>
+    <div style={{ display: 'grid', gap: '20px' }}>
       <section style={{ background: 'linear-gradient(135deg, rgba(199,70,52,0.98), rgba(26,43,74,0.98))', color: 'white', borderRadius: '16px', padding: '28px', boxShadow: 'var(--shadow-hover)' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '24px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px', alignItems: 'start' }}>
           <div>
-            <div style={{ fontSize: '12px', textTransform: 'uppercase', letterSpacing: '1px', opacity: 0.7 }}>Mission control</div>
-            <div style={{ fontSize: '38px', fontWeight: 700, lineHeight: 1.05, marginTop: '10px' }}>Train inside a believable Oracle BIP workflow.</div>
-            <p style={{ marginTop: '12px', maxWidth: '680px', fontSize: '16px', lineHeight: 1.7, opacity: 0.85 }}>
-              Pick a mission, open the mock workspace, build the SQL or bursting setup, run it against sample HR data, and let the trainer validate both the statement and the output.
+            <div style={{ fontSize: '12px', textTransform: 'uppercase', letterSpacing: '1px', opacity: 0.7 }}>BIP Virtual Reporting COE</div>
+            <div style={{ fontSize: '38px', fontWeight: 700, lineHeight: 1.05, marginTop: '10px' }}>Think in business, data, and layout.</div>
+            <p style={{ marginTop: '12px', maxWidth: '640px', fontSize: '16px', lineHeight: 1.7, opacity: 0.85 }}>
+              The trainer follows the PDF framework: choose a module, clarify the business requirement, map the Oracle tables and joins, then build the BIP output.
             </p>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
@@ -111,56 +173,135 @@ function Dashboard({ isScenarioDone, isModuleDone, isModuleLocked }) {
       </section>
 
       <section>
-        <SectionTitle title="Practice Missions" subtitle="Each mission has a stakeholder brief, task checklist, editor, execution preview, and validation coach." />
-        <div style={gridStyle}>
-          {SCENARIOS.map((scenario) => (
-            <div key={scenario.id} style={cardStyle}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', gap: '12px' }}>
-                <div>
-                  <div style={{ fontSize: '12px', color: 'var(--oracle-text-light)' }}>{scenario.id}</div>
-                  <div style={{ fontSize: '22px', fontWeight: 700, color: 'var(--oracle-navy)', marginTop: '6px' }}>{scenario.title}</div>
-                </div>
-                <span style={{ padding: '4px 10px', borderRadius: '999px', fontSize: '12px', fontWeight: 700, background: isScenarioDone(scenario.id) ? 'rgba(46,125,50,0.14)' : 'rgba(0,163,224,0.14)', color: isScenarioDone(scenario.id) ? 'var(--oracle-success)' : 'var(--oracle-accent)' }}>
-                  {isScenarioDone(scenario.id) ? 'Passed' : scenario.difficulty}
-                </span>
-              </div>
-              <div style={{ color: 'var(--oracle-text-light)', lineHeight: 1.6 }}>{scenario.description}</div>
-              <div style={{ background: 'var(--oracle-silver)', borderLeft: '4px solid var(--oracle-red)', borderRadius: '12px', padding: '14px', color: 'var(--oracle-text)' }}>
-                "{scenario.persona.message}"
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: 'var(--oracle-text-light)' }}>
-                <span>{scenario.tasks.length} tasks</span>
-                <span>{scenario.estimatedTime}</span>
-                <span style={{ color: 'var(--oracle-navy)', fontWeight: 700 }}>+{scenario.pointsOnPass} pts</span>
-              </div>
-              <button onClick={() => dispatch({ type: 'START_SCENARIO', payload: scenario })} style={primaryButton}>Open workspace</button>
-            </div>
-          ))}
+        <SectionTitle title="Select Domain" subtitle="Pick the finance area you want to train in." />
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '16px' }}>
+          {domainModules.map((domain) => {
+            const active = domainFilter === domain
+            const domainInfo = DOMAIN_BLUEPRINTS[domain]
+            return (
+              <button
+                key={domain}
+                onClick={() => setDomainFilter(domain)}
+                style={{
+                  ...cardStyle,
+                  textAlign: 'left',
+                  cursor: 'pointer',
+                  border: active ? '2px solid var(--oracle-red)' : '1px solid var(--oracle-silver-mid)',
+                  boxShadow: active ? 'var(--shadow-hover)' : 'var(--shadow-card)'
+                }}
+              >
+                <div style={{ fontSize: '12px', color: 'var(--oracle-text-light)' }}>{domain}</div>
+                <div style={{ marginTop: '6px', fontSize: '22px', fontWeight: 700, color: 'var(--oracle-navy)' }}>{domainInfo.label}</div>
+                <div style={{ marginTop: '8px', color: 'var(--oracle-text-light)', lineHeight: 1.6 }}>{domainInfo.businessGoal}</div>
+              </button>
+            )
+          })}
         </div>
       </section>
 
       <section>
-        <SectionTitle title="Knowledge Tracks" subtitle="These act as supporting references rather than the main experience." />
-        <div style={gridStyle}>
-          {BIP_MODULES.map((module) => (
-            <div key={module.id} style={{ ...cardStyle, borderLeft: `4px solid ${isModuleLocked(module) ? 'var(--oracle-silver-dark)' : module.color}`, opacity: isModuleLocked(module) ? 0.6 : 1 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', gap: '12px' }}>
-                <div>
-                  <div style={{ fontSize: '12px', color: 'var(--oracle-text-light)' }}>{module.id}</div>
-                  <div style={{ fontSize: '20px', fontWeight: 700, color: 'var(--oracle-navy)', marginTop: '6px' }}>{module.title}</div>
-                </div>
-                <div style={{ fontSize: '12px', fontWeight: 700, color: isModuleDone(module.id) ? 'var(--oracle-success)' : 'var(--oracle-text-light)' }}>
-                  {isModuleDone(module.id) ? 'DONE' : isModuleLocked(module) ? 'LOCKED' : 'READY'}
-                </div>
-              </div>
-              <div style={{ color: 'var(--oracle-text-light)', lineHeight: 1.6 }}>{module.description}</div>
-              {module.steps.slice(0, 3).map((step) => (
-                <div key={step.id} style={{ background: 'var(--oracle-silver)', borderRadius: '10px', padding: '10px 12px', color: 'var(--oracle-text)', lineHeight: 1.5 }}>
-                  <strong>{step.title}:</strong> {step.content.slice(0, 85)}...
+        <div style={{ ...cardStyle, display: 'grid', gridTemplateColumns: 'minmax(0, 1.1fr) minmax(280px, 0.9fr)', gap: '20px' }}>
+          <div>
+            <div style={{ fontSize: '12px', color: 'var(--oracle-red)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px' }}>
+              3-Layer BIP Thinking Model
+            </div>
+            <div style={{ marginTop: '8px', fontSize: '28px', fontWeight: 700, color: 'var(--oracle-navy)' }}>
+              {blueprint.label}
+            </div>
+            <div style={{ marginTop: '10px', color: 'var(--oracle-text-light)', lineHeight: 1.7 }}>
+              {blueprint.businessGoal}
+            </div>
+            <div style={{ marginTop: '16px', display: 'grid', gap: '10px' }}>
+              {[
+                { step: '01', title: 'Business Layer', body: `What report is needed, who uses it, and what decision it supports. Example: ${starter.reportName}.` },
+                { step: '02', title: 'Data Layer', body: `Start with ${blueprint.coreTables[0].name}, then map joins and filters. ${blueprint.joinPatterns[0]}.` },
+                { step: '03', title: 'Presentation Layer', body: `Choose the BIP output, grouping, parameters, and delivery logic. Typical output: ${starter.output}.` }
+              ].map((item) => (
+                <div key={item.step} style={{ display: 'grid', gridTemplateColumns: '44px minmax(0, 1fr)', gap: '12px', alignItems: 'start', background: 'var(--oracle-silver)', borderRadius: '12px', padding: '12px' }}>
+                  <div style={{ width: '44px', height: '44px', borderRadius: '10px', background: 'var(--oracle-navy)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700 }}>
+                    {item.step}
+                  </div>
+                  <div>
+                    <div style={{ fontWeight: 700, color: 'var(--oracle-navy)' }}>{item.title}</div>
+                    <div style={{ marginTop: '4px', color: 'var(--oracle-text-light)', lineHeight: 1.6 }}>{item.body}</div>
+                  </div>
                 </div>
               ))}
             </div>
-          ))}
+          </div>
+
+          <div style={{ background: 'var(--oracle-silver)', borderRadius: '14px', padding: '16px' }}>
+            <div style={{ fontSize: '12px', color: 'var(--oracle-text-light)', textTransform: 'uppercase', letterSpacing: '1px' }}>
+              Smart Panel Roles
+            </div>
+            <div style={{ marginTop: '10px', display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+              {PANEL_ROLES.map((role) => (
+                <span key={role} style={{ background: 'white', border: '1px solid var(--oracle-silver-mid)', borderRadius: '999px', padding: '7px 10px', fontSize: '12px', fontWeight: 700, color: 'var(--oracle-navy)' }}>
+                  {role}
+                </span>
+              ))}
+            </div>
+            <div style={{ marginTop: '16px', fontSize: '13px', color: 'var(--oracle-text-light)', lineHeight: 1.6 }}>
+              The app should act like this panel: clarify the requirement, suggest tables, build SQL, then shape the BIP report.
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <div style={{ ...cardStyle, display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(280px, 0.8fr)', gap: '20px' }}>
+          <div>
+            <div style={{ fontSize: '12px', color: 'var(--oracle-red)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px' }}>
+              Fixed Prompt Template
+            </div>
+            <div style={{ marginTop: '8px', fontSize: '24px', fontWeight: 700, color: 'var(--oracle-navy)' }}>
+              Ask every report the same structured way
+            </div>
+            <div style={{ marginTop: '12px', display: 'grid', gap: '10px' }}>
+              {[
+                ['Module', highlightedDomain],
+                ['Report Requirement', starter.reportName],
+                ['Filters Needed', starter.filters],
+                ['Output Format', starter.output],
+                ['Known Tables', starter.knownTables],
+                ['Issue', 'If debugging, describe where the SQL or BIP output is failing']
+              ].map(([label, value]) => (
+                <div key={label} style={{ display: 'grid', gridTemplateColumns: '160px minmax(0, 1fr)', gap: '12px', background: 'var(--oracle-silver)', borderRadius: '10px', padding: '10px 12px' }}>
+                  <div style={{ fontWeight: 700, color: 'var(--oracle-navy)' }}>{label}</div>
+                  <div style={{ color: 'var(--oracle-text-light)', lineHeight: 1.6 }}>{value}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div style={{ background: 'var(--oracle-silver)', borderRadius: '14px', padding: '16px' }}>
+            <div style={{ fontSize: '12px', color: 'var(--oracle-text-light)', textTransform: 'uppercase', letterSpacing: '1px' }}>
+              First guided exercise
+            </div>
+            {featuredScenario ? (
+              <>
+                <div style={{ marginTop: '8px', fontSize: '22px', fontWeight: 700, color: 'var(--oracle-navy)' }}>
+                  {featuredScenario.title}
+                </div>
+                <div style={{ marginTop: '8px', color: 'var(--oracle-text-light)', lineHeight: 1.6 }}>
+                  {featuredScenario.description}
+                </div>
+                <div style={{ marginTop: '12px', color: 'var(--oracle-text)', lineHeight: 1.6 }}>
+                  "{featuredScenario.persona.message}"
+                </div>
+                <button
+                  onClick={() => dispatch({ type: 'START_SCENARIO', payload: featuredScenario })}
+                  style={{ ...primaryButton, marginTop: '16px', width: '100%' }}
+                >
+                  Start {highlightedDomain} exercise
+                </button>
+              </>
+            ) : (
+              <div style={{ marginTop: '8px', color: 'var(--oracle-text-light)' }}>
+                No mission is configured for this domain yet.
+              </div>
+            )}
+          </div>
         </div>
       </section>
     </div>
@@ -174,6 +315,8 @@ function ScenarioWorkspace() {
   const workspace = state.scenarioWorkspace
   const [quizAnswers, setQuizAnswers] = useState([])
   const coachNotes = useMemo(() => getCoachNotes(scenario), [scenario])
+  const schema = DOMAIN_SCHEMAS[scenario.domain] || DOMAIN_SCHEMAS.GL
+  const blueprint = DOMAIN_BLUEPRINTS[scenario.domain] || DOMAIN_BLUEPRINTS.GL
   const params = inferParams(task, workspace.sqlDraft)
   const taskDone = workspace.completedTaskIds.includes(task.id)
   const result = workspace.lastRun?.result
@@ -215,7 +358,7 @@ function ScenarioWorkspace() {
       <div style={{ ...cardStyle, padding: 0, overflow: 'hidden' }}>
         <div style={{ background: 'var(--oracle-navy)', color: 'white', padding: '16px 20px', display: 'flex', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap' }}>
           <div>
-            <div style={{ fontSize: '12px', opacity: 0.6, textTransform: 'uppercase', letterSpacing: '1px' }}>Shared folders / Training catalog / {scenario.moduleId}</div>
+            <div style={{ fontSize: '12px', opacity: 0.6, textTransform: 'uppercase', letterSpacing: '1px' }}>Shared folders / Financials / {scenario.domain} / {scenario.moduleId}</div>
             <div style={{ fontSize: '24px', fontWeight: 700, marginTop: '4px' }}>{scenario.title}</div>
           </div>
           <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
@@ -231,7 +374,8 @@ function ScenarioWorkspace() {
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '20px', alignItems: 'start' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '280px 340px minmax(0, 1fr)', gap: '20px', alignItems: 'start' }}>
+        <OracleSidebar domainFilter={scenario.domain} />
         <div style={{ display: 'grid', gap: '16px' }}>
           <Panel title="Business Brief">
             <div style={{ color: 'var(--oracle-text)', lineHeight: 1.6 }}>
@@ -271,6 +415,35 @@ function ScenarioWorkspace() {
               ))}
             </div>
           </Panel>
+
+          <Panel title="Join Strategy">
+            <div style={{ display: 'grid', gap: '10px' }}>
+              {blueprint.joinPatterns.map((pattern) => (
+                <div key={pattern} style={{ background: 'var(--oracle-silver)', borderLeft: '4px solid var(--oracle-red)', borderRadius: '10px', padding: '10px 12px', color: 'var(--oracle-text)' }}>
+                  {pattern}
+                </div>
+              ))}
+            </div>
+            <div style={{ marginTop: '12px', fontSize: '13px', color: 'var(--oracle-text-light)', lineHeight: 1.6 }}>
+              Business goal: <strong style={{ color: 'var(--oracle-navy)' }}>{blueprint.businessGoal}</strong>
+            </div>
+          </Panel>
+
+          <Panel title="Business Logic Cautions">
+            <ul style={{ margin: '0 0 0 18px', color: 'var(--oracle-text-light)', lineHeight: 1.7 }}>
+              {blueprint.cautions.map((item) => <li key={item}>{item}</li>)}
+            </ul>
+          </Panel>
+
+          <Panel title="Catalog Objects">
+            <div style={{ display: 'grid', gap: '10px' }}>
+              {schema.objects.map((item) => (
+                <div key={item} style={{ borderRadius: '10px', background: 'var(--oracle-silver)', padding: '10px 12px', color: 'var(--oracle-text)' }}>
+                  {item}
+                </div>
+              ))}
+            </div>
+          </Panel>
         </div>
 
         <div style={{ display: 'grid', gap: '16px' }}>
@@ -278,6 +451,17 @@ function ScenarioWorkspace() {
             <div style={{ fontSize: '22px', fontWeight: 700, color: 'var(--oracle-navy)' }}>{task.title}</div>
             <div style={{ marginTop: '8px', color: 'var(--oracle-text)', lineHeight: 1.7 }}>{task.instruction}</div>
             {task.hint && <div style={{ marginTop: '12px', background: 'rgba(0,163,224,0.08)', border: '1px solid rgba(0,163,224,0.18)', borderRadius: '12px', padding: '12px', color: 'var(--oracle-text)' }}><strong>Hint:</strong> {task.hint}</div>}
+            <div style={{ marginTop: '14px', display: 'grid', gap: '10px' }}>
+              <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--oracle-navy)' }}>Core tables for this business area</div>
+              <div style={{ display: 'grid', gap: '8px' }}>
+                {blueprint.coreTables.slice(0, 4).map((table) => (
+                  <div key={table.name} style={{ background: 'var(--oracle-silver)', borderRadius: '10px', padding: '10px 12px' }}>
+                    <div style={{ fontWeight: 700, color: 'var(--oracle-navy)' }}>{table.name}</div>
+                    <div style={{ marginTop: '4px', color: 'var(--oracle-text-light)', lineHeight: 1.5 }}>{table.purpose}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
           </Panel>
 
           {task.validation?.type === 'quiz' ? (
@@ -444,6 +628,93 @@ function ResultsTable({ columns, rows }) {
         </tbody>
       </table>
     </div>
+  )
+}
+
+function OracleSidebar({ domainFilter, setDomainFilter }) {
+  const activeDomain = domainFilter === 'All' ? 'GL' : domainFilter
+  const schema = DOMAIN_SCHEMAS[activeDomain] || DOMAIN_SCHEMAS.GL
+
+  return (
+    <aside style={{
+      background: 'linear-gradient(180deg, var(--oracle-navy) 0%, var(--oracle-navy-mid) 100%)',
+      color: 'white',
+      borderRadius: '16px',
+      padding: '16px',
+      boxShadow: 'var(--shadow-card)',
+      border: '1px solid rgba(255,255,255,0.06)'
+    }}>
+      <div style={{ fontSize: '11px', letterSpacing: '1.2px', textTransform: 'uppercase', opacity: 0.55 }}>
+        Navigator
+      </div>
+      <div style={{ marginTop: '8px', fontSize: '18px', fontWeight: 700 }}>
+        Oracle BI Publisher
+      </div>
+
+      <div style={{ marginTop: '18px', display: 'grid', gap: '8px' }}>
+        {DOMAIN_OPTIONS.map((domain) => {
+          const active = domainFilter === domain
+          return (
+            <button
+              key={domain}
+              onClick={() => setDomainFilter?.(domain)}
+              disabled={!setDomainFilter}
+              style={{
+                textAlign: 'left',
+                padding: '10px 12px',
+                borderRadius: '10px',
+                border: `1px solid ${active ? 'rgba(232,93,69,0.65)' : 'rgba(255,255,255,0.08)'}`,
+                background: active ? 'rgba(199,70,52,0.18)' : 'rgba(255,255,255,0.04)',
+                color: 'white',
+                opacity: !setDomainFilter && !active ? 0.55 : 1,
+                cursor: setDomainFilter ? 'pointer' : 'default',
+                fontWeight: 700,
+                fontSize: '13px'
+              }}
+            >
+              {domain === 'All' ? 'All Financial Modules' : `${domain} - ${DOMAIN_SCHEMAS[domain].label}`}
+            </button>
+          )
+        })}
+      </div>
+
+      <div style={{ marginTop: '20px', paddingTop: '16px', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+        <div style={{ fontSize: '11px', letterSpacing: '1px', textTransform: 'uppercase', opacity: 0.5 }}>
+          Catalog
+        </div>
+        <div style={{ marginTop: '10px', display: 'grid', gap: '8px' }}>
+          {schema.folders.map((folder, index) => (
+            <div
+              key={folder}
+              style={{
+                paddingLeft: `${index * 10}px`,
+                fontSize: '13px',
+                color: index === schema.folders.length - 1 ? 'white' : 'rgba(255,255,255,0.68)',
+                display: 'flex',
+                gap: '8px',
+                alignItems: 'center'
+              }}
+            >
+              <span style={{ color: 'var(--oracle-red-light)' }}>{index === schema.folders.length - 1 ? '>' : 'v'}</span>
+              <span>{folder}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div style={{ marginTop: '20px', paddingTop: '16px', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+        <div style={{ fontSize: '11px', letterSpacing: '1px', textTransform: 'uppercase', opacity: 0.5 }}>
+          Recent Objects
+        </div>
+        <div style={{ marginTop: '10px', display: 'grid', gap: '8px' }}>
+          {schema.objects.map((item) => (
+            <div key={item} style={{ background: 'rgba(255,255,255,0.05)', borderRadius: '10px', padding: '9px 10px', fontSize: '12px', color: 'rgba(255,255,255,0.78)' }}>
+              {item}
+            </div>
+          ))}
+        </div>
+      </div>
+    </aside>
   )
 }
 

@@ -2,6 +2,7 @@ export const SCENARIOS = [
   {
     id: 'SC-001',
     moduleId: 'MOD-002',
+    domain: 'GL',
     title: 'Build a Payroll Data Model',
     description: 'The Finance team needs a monthly payroll report. Your job is to write the SQL data model that powers it.',
     difficulty: 'Intermediate',
@@ -75,6 +76,7 @@ export const SCENARIOS = [
   {
     id: 'SC-002',
     moduleId: 'MOD-002',
+    domain: 'GL',
     title: 'Executive Headcount Query',
     description: 'The CEO wants a quick headcount report grouped by department with average salary.',
     difficulty: 'Intermediate',
@@ -124,6 +126,7 @@ export const SCENARIOS = [
   {
     id: 'SC-003',
     moduleId: 'MOD-002',
+    domain: 'AR',
     title: 'High Earners Audit Report',
     description: 'The Audit team needs a list of all employees earning above a threshold, with their manager details.',
     difficulty: 'Advanced',
@@ -185,6 +188,7 @@ export const SCENARIOS = [
   {
     id: 'SC-004',
     moduleId: 'MOD-001',
+    domain: 'AP',
     title: 'Choose the Right Output Format',
     description: 'Three different stakeholders need the same report in different formats. Match the right format to each use case.',
     difficulty: 'Beginner',
@@ -238,6 +242,7 @@ export const SCENARIOS = [
   {
     id: 'SC-005',
     moduleId: 'MOD-004',
+    domain: 'AP',
     title: 'Configure a Bursting Query',
     description: 'HR wants to email each department manager their own department\'s headcount report automatically.',
     difficulty: 'Advanced',
