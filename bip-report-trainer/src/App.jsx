@@ -171,6 +171,7 @@ function Dashboard({ domainFilter, setDomainFilter, isScenarioDone, onStartDomai
           {domainModules.map((domain) => {
             const active = domainFilter === domain
             const domainInfo = DOMAIN_BLUEPRINTS[domain]
+            const practiceCount = SCENARIOS.filter((scenario) => scenario.domain === domain).length
             return (
               <button
                 key={domain}
@@ -186,6 +187,9 @@ function Dashboard({ domainFilter, setDomainFilter, isScenarioDone, onStartDomai
                 <div style={{ fontSize: '12px', color: 'var(--oracle-text-light)' }}>{domain}</div>
                 <div style={{ marginTop: '6px', fontSize: '22px', fontWeight: 700, color: 'var(--oracle-navy)' }}>{domainInfo.label}</div>
                 <div style={{ marginTop: '8px', color: 'var(--oracle-text-light)', lineHeight: 1.6 }}>{domainInfo.businessGoal}</div>
+                <div style={{ marginTop: '10px', fontSize: '12px', fontWeight: 700, color: 'var(--oracle-red)' }}>
+                  {practiceCount} Oracle SQL practice scenarios
+                </div>
               </button>
             )
           })}

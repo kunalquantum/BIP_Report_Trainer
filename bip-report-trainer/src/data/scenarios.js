@@ -155,6 +155,151 @@ export const SCENARIOS = [
     }
   },
   {
+    id: 'SC-AP-002',
+    moduleId: 'MOD-002',
+    domain: 'AP',
+    title: 'AP Supplier Outstanding Summary',
+    description: 'Summarise supplier outstanding balances for a business unit.',
+    difficulty: 'Intermediate',
+    estimatedTime: '12 min',
+    pointsOnPass: 140,
+    persona: {
+      name: 'Manoj Iyer',
+      role: 'AP Controller',
+      avatar: 'MI',
+      avatarColor: '#E65100',
+      message: 'Give me supplier-wise outstanding balance for India BU. I do not need invoice detail, only supplier total outstanding so I can see whom we owe the most.'
+    },
+    tasks: [
+      {
+        id: 1,
+        title: 'Build the AP summary join',
+        instruction: 'Use AP_INVOICES_ALL, AP_SUPPLIERS, AP_PAYMENT_SCHEDULES_ALL, and HR_OPERATING_UNITS.',
+        hint: 'Use the same AP path as the invoice detail report before you aggregate.',
+        validation: {
+          type: 'sql',
+          mustIncludeTables: ['AP_INVOICES_ALL', 'AP_SUPPLIERS', 'AP_PAYMENT_SCHEDULES_ALL', 'HR_OPERATING_UNITS'],
+          mustHaveJoin: true,
+          minRows: 2
+        },
+        points: 35
+      },
+      {
+        id: 2,
+        title: 'Apply the correct business condition',
+        instruction: 'Filter for open supplier liability only.',
+        hint: 'Use aps.amount_due_remaining > 0.',
+        validation: {
+          type: 'sql',
+          mustHaveWhere: true,
+          mustInclude: ['AMOUNT_DUE_REMAINING > 0']
+        },
+        points: 35
+      },
+      {
+        id: 3,
+        title: 'Aggregate by supplier',
+        instruction: 'Return VENDOR_NAME and SUM(AMOUNT_DUE_REMAINING) grouped by supplier.',
+        hint: 'Use SUM and GROUP BY VENDOR_NAME.',
+        validation: {
+          type: 'sql',
+          mustInclude: ['SUM', 'GROUP BY'],
+          mustIncludeColumns: ['VENDOR_NAME', 'AMOUNT_DUE_REMAINING']
+        },
+        points: 35
+      },
+      {
+        id: 4,
+        title: 'Preview India BU summary',
+        instruction: 'Run the query with :p_bu_name = India BU and verify all rows belong to India BU.',
+        hint: 'Use the same BU parameter pattern as the invoice detail model.',
+        validation: {
+          type: 'execution',
+          paramValues: { p_bu_name: 'India BU' },
+          minRows: 1,
+          rowRules: [{ field: 'BU_NAME', operator: '=', value: 'India BU' }]
+        },
+        points: 35
+      }
+    ],
+    outcome: {
+      pass: 'The supplier outstanding summary is ready and the AP team can now identify major liabilities quickly.',
+      fail: 'Make sure you are summarising supplier-level outstanding balance instead of returning raw invoice detail.'
+    }
+  },
+  {
+    id: 'SC-AR-002',
+    moduleId: 'MOD-002',
+    domain: 'AR',
+    title: 'AR Customer Outstanding Summary',
+    description: 'Summarise open receivables by customer for collections follow-up.',
+    difficulty: 'Intermediate',
+    estimatedTime: '12 min',
+    pointsOnPass: 140,
+    persona: {
+      name: 'Rhea Kapoor',
+      role: 'Collections Analyst',
+      avatar: 'RK',
+      avatarColor: '#7B1FA2',
+      message: 'Show me customer-wise open receivables for Vision Operations. I want customer total outstanding, not transaction detail.'
+    },
+    tasks: [
+      {
+        id: 1,
+        title: 'Build the AR summary join',
+        instruction: 'Use RA_CUSTOMER_TRX_ALL, HZ_CUST_ACCOUNTS, AR_PAYMENT_SCHEDULES_ALL, and HR_OPERATING_UNITS.',
+        hint: 'Start from the transaction table, then join customer and payment schedule logic.',
+        validation: {
+          type: 'sql',
+          mustIncludeTables: ['RA_CUSTOMER_TRX_ALL', 'HZ_CUST_ACCOUNTS', 'AR_PAYMENT_SCHEDULES_ALL', 'HR_OPERATING_UNITS'],
+          mustHaveJoin: true
+        },
+        points: 35
+      },
+      {
+        id: 2,
+        title: 'Apply the open balance condition',
+        instruction: 'Return only transactions with remaining receivable amount.',
+        hint: 'Use aps.amount_due_remaining > 0.',
+        validation: {
+          type: 'sql',
+          mustInclude: ['AMOUNT_DUE_REMAINING > 0'],
+          mustHaveWhere: true
+        },
+        points: 35
+      },
+      {
+        id: 3,
+        title: 'Aggregate by customer',
+        instruction: 'Return CUSTOMER_NAME and SUM(AMOUNT_DUE_REMAINING) grouped by customer.',
+        hint: 'Use SUM and GROUP BY CUSTOMER_NAME.',
+        validation: {
+          type: 'sql',
+          mustInclude: ['SUM', 'GROUP BY'],
+          mustIncludeColumns: ['CUSTOMER_NAME', 'AMOUNT_DUE_REMAINING']
+        },
+        points: 35
+      },
+      {
+        id: 4,
+        title: 'Preview Vision Operations summary',
+        instruction: 'Run the query with :p_bu_name = Vision Operations and verify all rows belong to that BU.',
+        hint: 'Filter with the BU parameter before running.',
+        validation: {
+          type: 'execution',
+          paramValues: { p_bu_name: 'Vision Operations' },
+          minRows: 1,
+          rowRules: [{ field: 'BU_NAME', operator: '=', value: 'Vision Operations' }]
+        },
+        points: 35
+      }
+    ],
+    outcome: {
+      pass: 'The AR customer summary is ready for collections review.',
+      fail: 'Check whether you are grouping by customer correctly and still keeping the open balance condition.'
+    }
+  },
+  {
     id: 'SC-GL-001',
     moduleId: 'MOD-002',
     domain: 'GL',
@@ -228,6 +373,81 @@ export const SCENARIOS = [
     outcome: {
       pass: 'The GL trial balance dataset is ready for BIP publishing.',
       fail: 'Make sure the balance table drives the query and the ledger/period filters are applied correctly.'
+    }
+  },
+  {
+    id: 'SC-GL-002',
+    moduleId: 'MOD-002',
+    domain: 'GL',
+    title: 'GL Account Balance Summary',
+    description: 'Build a summarised GL balance report by account segment.',
+    difficulty: 'Intermediate',
+    estimatedTime: '12 min',
+    pointsOnPass: 140,
+    persona: {
+      name: 'Deepak Sharma',
+      role: 'Finance Systems Lead',
+      avatar: 'DS',
+      avatarColor: '#009688',
+      message: 'I need a ledger-period account balance summary. Show account segment and ending balance for Vision Ledger in JAN-26.'
+    },
+    tasks: [
+      {
+        id: 1,
+        title: 'Use the GL balance path',
+        instruction: 'Start from GL_BALANCES and join GL_CODE_COMBINATIONS and GL_LEDGERS.',
+        hint: 'This is still a balance report, so do not start from journal headers.',
+        validation: {
+          type: 'sql',
+          mustIncludeTables: ['GL_BALANCES', 'GL_CODE_COMBINATIONS', 'GL_LEDGERS'],
+          mustHaveJoin: true
+        },
+        points: 35
+      },
+      {
+        id: 2,
+        title: 'Apply the ledger and period condition',
+        instruction: 'Filter using :p_ledger_name and :p_period_name.',
+        hint: 'Both are required business controls in GL reporting.',
+        validation: {
+          type: 'sql',
+          mustIncludeBinds: [':p_ledger_name', ':p_period_name'],
+          mustHaveWhere: true
+        },
+        points: 35
+      },
+      {
+        id: 3,
+        title: 'Return a summary shape',
+        instruction: 'Return SEGMENT1, SEGMENT2, and ENDING_BALANCE sorted by account segment.',
+        hint: 'Use ORDER BY on account segments.',
+        validation: {
+          type: 'sql',
+          mustIncludeColumns: ['SEGMENT1', 'SEGMENT2', 'ENDING_BALANCE'],
+          mustInclude: ['ORDER BY']
+        },
+        points: 35
+      },
+      {
+        id: 4,
+        title: 'Preview Vision Ledger JAN-26 summary',
+        instruction: 'Run the query with Vision Ledger and JAN-26 and verify all rows belong to that ledger and period.',
+        hint: 'Use p_ledger_name and p_period_name as runtime inputs.',
+        validation: {
+          type: 'execution',
+          paramValues: { p_ledger_name: 'Vision Ledger', p_period_name: 'JAN-26' },
+          minRows: 2,
+          rowRules: [
+            { field: 'LEDGER_NAME', operator: '=', value: 'Vision Ledger' },
+            { field: 'PERIOD_NAME', operator: '=', value: 'JAN-26' }
+          ]
+        },
+        points: 35
+      }
+    ],
+    outcome: {
+      pass: 'The GL account summary is valid and ready to be used in a lightweight BIP layout.',
+      fail: 'Keep the report balance-driven and make sure ledger and period filters remain explicit.'
     }
   }
 ]

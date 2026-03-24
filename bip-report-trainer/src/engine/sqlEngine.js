@@ -141,6 +141,43 @@ function buildBurstingRows() {
   }))
 }
 
+function aggregateRows(rows, sql) {
+  const upper = sql.toUpperCase()
+  if (!(upper.includes('SUM') && upper.includes('GROUP BY'))) return rows
+
+  if (upper.includes('VENDOR_NAME')) {
+    return Object.values(rows.reduce((groups, row) => {
+      const key = `${row.BU_NAME}|${row.VENDOR_NAME}`
+      if (!groups[key]) {
+        groups[key] = {
+          VENDOR_NAME: row.VENDOR_NAME,
+          BU_NAME: row.BU_NAME,
+          AMOUNT_DUE_REMAINING: 0
+        }
+      }
+      groups[key].AMOUNT_DUE_REMAINING += Number(row.AMOUNT_DUE_REMAINING || 0)
+      return groups
+    }, {}))
+  }
+
+  if (upper.includes('CUSTOMER_NAME')) {
+    return Object.values(rows.reduce((groups, row) => {
+      const key = `${row.BU_NAME}|${row.CUSTOMER_NAME}`
+      if (!groups[key]) {
+        groups[key] = {
+          CUSTOMER_NAME: row.CUSTOMER_NAME,
+          BU_NAME: row.BU_NAME,
+          AMOUNT_DUE_REMAINING: 0
+        }
+      }
+      groups[key].AMOUNT_DUE_REMAINING += Number(row.AMOUNT_DUE_REMAINING || 0)
+      return groups
+    }, {}))
+  }
+
+  return rows
+}
+
 function applyBindFilters(rows, params) {
   let filtered = [...rows]
 
@@ -256,6 +293,7 @@ export function executeSQL(sql, params = {}) {
 
     rows = applyBindFilters(rows, params)
     rows = applyLiteralFilters(rows, sql)
+    rows = aggregateRows(rows, sql)
     rows = applyOrderBy(rows, sql)
     rows = pickColumns(rows, sql)
 

@@ -64,6 +64,23 @@ export const DOMAIN_LABS = {
           correct: 'Correct. Remaining amount greater than zero captures both fully unpaid and partially paid invoices.',
           incorrect: 'Think like finance. Remaining amount is what determines whether liability is still open.'
         }
+      },
+      {
+        id: 'ap-business-condition',
+        type: 'quiz',
+        title: 'Business Condition Practice',
+        prompt: 'If the AP lead asks for overdue unpaid invoices, which additional condition matters most?',
+        options: [
+          'invoice_amount > 0',
+          'due_date < SYSDATE',
+          'vendor_id IS NOT NULL',
+          'invoice_num IS NOT NULL'
+        ],
+        answer: 1,
+        feedback: {
+          correct: 'Correct. Overdue means the due date has already passed.',
+          incorrect: 'Translate the business word carefully. “Overdue” is a due-date condition, not just an amount condition.'
+        }
       }
     ]
   },
@@ -132,6 +149,23 @@ export const DOMAIN_LABS = {
           correct: 'Correct. Open balance reporting depends on receipt application and remaining receivable logic.',
           incorrect: 'The business meaning of “open” depends on whether receipts or credits have already been applied.'
         }
+      },
+      {
+        id: 'ar-business-condition',
+        type: 'quiz',
+        title: 'Business Condition Practice',
+        prompt: 'If collections asks for overdue open receivables, what extra business condition should you think about?',
+        options: [
+          'The due date must already be past today',
+          'The customer name must not be null',
+          'The output must be PDF',
+          'The transaction number must be sorted'
+        ],
+        answer: 0,
+        feedback: {
+          correct: 'Correct. “Overdue” is driven by due date, not just by open amount.',
+          incorrect: 'Open amount tells you it is outstanding. Overdue adds a due-date condition.'
+        }
       }
     ]
   },
@@ -199,6 +233,23 @@ export const DOMAIN_LABS = {
         feedback: {
           correct: 'Correct. Ledger and period are core business controls in GL reporting.',
           incorrect: 'GL reports need accounting context first. Ledger and period are the minimum business filters.'
+        }
+      },
+      {
+        id: 'gl-business-condition',
+        type: 'quiz',
+        title: 'Business Condition Practice',
+        prompt: 'If finance asks for a clean trial balance, what should always be explicit in the business condition?',
+        options: [
+          'Supplier and due date',
+          'Customer and receipt status',
+          'Ledger and accounting period',
+          'Vendor and invoice amount'
+        ],
+        answer: 2,
+        feedback: {
+          correct: 'Correct. Trial balance meaning changes completely if ledger or period is ambiguous.',
+          incorrect: 'In GL, ledger and period define the accounting context of the result.'
         }
       }
     ]
