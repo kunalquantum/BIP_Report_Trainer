@@ -81,6 +81,18 @@ export const DOMAIN_LABS = {
           correct: 'Correct. Overdue means the due date has already passed.',
           incorrect: 'Translate the business word carefully. “Overdue” is a due-date condition, not just an amount condition.'
         }
+      },
+      {
+        id: 'ap-practice-zone',
+        type: 'typing',
+        title: 'Practice Zone: Type the AP Condition',
+        prompt: 'Type the business condition that returns only unpaid or partially paid invoices. Do not paste it.',
+        expectedAnswer: 'aps.amount_due_remaining > 0',
+        placeholder: 'Type the condition exactly as Oracle SQL logic...',
+        feedback: {
+          correct: 'Correct. This is the core AP business condition for open liability.',
+          incorrect: 'Use the remaining amount from AP_PAYMENT_SCHEDULES_ALL. This condition should identify invoices that still have money due.'
+        }
       }
     ]
   },
@@ -166,6 +178,18 @@ export const DOMAIN_LABS = {
           correct: 'Correct. “Overdue” is driven by due date, not just by open amount.',
           incorrect: 'Open amount tells you it is outstanding. Overdue adds a due-date condition.'
         }
+      },
+      {
+        id: 'ar-practice-zone',
+        type: 'typing',
+        title: 'Practice Zone: Type the AR Condition',
+        prompt: 'Type the business condition that returns only open receivables. Do not paste it.',
+        expectedAnswer: 'aps.amount_due_remaining > 0',
+        placeholder: 'Type the condition exactly as Oracle SQL logic...',
+        feedback: {
+          correct: 'Correct. Open receivables are identified through remaining amount.',
+          incorrect: 'The condition should use remaining amount from the AR payment schedule, not just transaction amount.'
+        }
       }
     ]
   },
@@ -250,6 +274,18 @@ export const DOMAIN_LABS = {
         feedback: {
           correct: 'Correct. Trial balance meaning changes completely if ledger or period is ambiguous.',
           incorrect: 'In GL, ledger and period define the accounting context of the result.'
+        }
+      },
+      {
+        id: 'gl-practice-zone',
+        type: 'typing',
+        title: 'Practice Zone: Type the GL Filter',
+        prompt: 'Type the ledger condition for a parameterized GL trial balance. Do not paste it.',
+        expectedAnswer: 'gl.name = :p_ledger_name',
+        placeholder: 'Type the condition exactly as Oracle SQL logic...',
+        feedback: {
+          correct: 'Correct. Ledger filter should be explicit and parameter-driven.',
+          incorrect: 'Use the ledger name column and a runtime bind parameter. Keep it clean and explicit.'
         }
       }
     ]

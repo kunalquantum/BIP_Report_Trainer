@@ -336,6 +336,18 @@ function DomainLab({ domain, onBack, onStartExercise }) {
     })
   }
 
+  const submitTypedAnswer = () => {
+    if (stage.type !== 'typing') return
+    const typed = String(answers[stage.id] || '').trim().replace(/\s+/g, ' ').toLowerCase()
+    const expected = String(stage.expectedAnswer || '').trim().replace(/\s+/g, ' ').toLowerCase()
+    const passed = typed === expected
+
+    setFeedback({
+      passed,
+      text: passed ? stage.feedback.correct : stage.feedback.incorrect
+    })
+  }
+
   return (
     <div style={{ display: 'grid', gridTemplateColumns: '300px minmax(0, 1fr)', gap: '20px', alignItems: 'start' }}>
       <aside style={{
@@ -392,10 +404,10 @@ function DomainLab({ domain, onBack, onStartExercise }) {
             {stage.title}
           </div>
 
-          {stage.type === 'lesson' ? (
-            <>
-              <div style={{ marginTop: '14px', color: 'var(--oracle-text)', lineHeight: 1.8 }}>
-                {stage.body}
+            {stage.type === 'lesson' ? (
+              <>
+                <div style={{ marginTop: '14px', color: 'var(--oracle-text)', lineHeight: 1.8 }}>
+                  {stage.body}
               </div>
               <div style={{ marginTop: '18px', display: 'grid', gap: '10px' }}>
                 {stage.takeaways.map((item) => (
@@ -405,10 +417,10 @@ function DomainLab({ domain, onBack, onStartExercise }) {
                 ))}
               </div>
             </>
-          ) : (
-            <>
-              <div style={{ marginTop: '14px', color: 'var(--oracle-text)', lineHeight: 1.8 }}>
-                {stage.prompt}
+            ) : stage.type === 'quiz' ? (
+              <>
+                <div style={{ marginTop: '14px', color: 'var(--oracle-text)', lineHeight: 1.8 }}>
+                  {stage.prompt}
               </div>
               <div style={{ marginTop: '16px', display: 'grid', gap: '10px' }}>
                 {stage.options.map((option, optionIndex) => {
@@ -435,9 +447,45 @@ function DomainLab({ domain, onBack, onStartExercise }) {
                     </label>
                   )
                 })}
-              </div>
-            </>
-          )}
+                </div>
+              </>
+            ) : (
+              <>
+                <div style={{ marginTop: '14px', color: 'var(--oracle-text)', lineHeight: 1.8 }}>
+                  {stage.prompt}
+                </div>
+                <div style={{ marginTop: '14px', background: 'rgba(199,70,52,0.06)', border: '1px solid rgba(199,70,52,0.18)', borderRadius: '12px', padding: '10px 12px', color: 'var(--oracle-text-light)', fontSize: '13px' }}>
+                  Curated practice zone: paste, cut, and drop are blocked here. Type the answer yourself.
+                </div>
+                <textarea
+                  value={answers[stage.id] || ''}
+                  onChange={(event) => setAnswers((current) => ({ ...current, [stage.id]: event.target.value }))}
+                  onPaste={(event) => event.preventDefault()}
+                  onCut={(event) => event.preventDefault()}
+                  onDrop={(event) => event.preventDefault()}
+                  onContextMenu={(event) => event.preventDefault()}
+                  placeholder={stage.placeholder}
+                  spellCheck={false}
+                  style={{
+                    width: '100%',
+                    minHeight: '130px',
+                    marginTop: '14px',
+                    borderRadius: '12px',
+                    border: '1px solid var(--oracle-silver-mid)',
+                    padding: '14px',
+                    fontSize: '14px',
+                    lineHeight: 1.6,
+                    fontFamily: 'var(--font-mono)',
+                    resize: 'vertical',
+                    background: '#FAFBFD',
+                    color: 'var(--oracle-text)'
+                  }}
+                />
+                <div style={{ marginTop: '8px', fontSize: '12px', color: 'var(--oracle-text-light)' }}>
+                  Typed characters: {(answers[stage.id] || '').length}
+                </div>
+              </>
+            )}
 
           {feedback && (
             <div style={{
@@ -470,6 +518,15 @@ function DomainLab({ domain, onBack, onStartExercise }) {
                   Check answer
                 </button>
               )}
+              {stage.type === 'typing' && (
+                <button
+                  onClick={submitTypedAnswer}
+                  disabled={!String(answers[stage.id] || '').trim()}
+                  style={{ ...ghostLightButton, opacity: String(answers[stage.id] || '').trim() ? 1 : 0.45 }}
+                >
+                  Validate typed answer
+                </button>
+              )}
 
               {isLast ? (
                 <button
@@ -482,8 +539,8 @@ function DomainLab({ domain, onBack, onStartExercise }) {
               ) : (
                 <button
                   onClick={goNext}
-                  disabled={stage.type === 'quiz' && !feedback?.passed}
-                  style={{ ...primaryButton, opacity: stage.type === 'quiz' && !feedback?.passed ? 0.45 : 1 }}
+                  disabled={stage.type !== 'lesson' && !feedback?.passed}
+                  style={{ ...primaryButton, opacity: stage.type !== 'lesson' && !feedback?.passed ? 0.45 : 1 }}
                 >
                   Next step
                 </button>
