@@ -1,52 +1,207 @@
 export const SCENARIOS = [
   {
-    id: 'SC-001',
+    id: 'SC-AP-001',
     moduleId: 'MOD-002',
-    domain: 'GL',
-    title: 'Build a Payroll Data Model',
-    description: 'The Finance team needs a monthly payroll report. Your job is to write the SQL data model that powers it.',
+    domain: 'AP',
+    title: 'AP Unpaid Invoice Data Model',
+    description: 'Build the AP data model for unpaid and partially paid supplier invoices.',
     difficulty: 'Intermediate',
     estimatedTime: '15 min',
     pointsOnPass: 150,
     persona: {
-      name: 'Sarah Mitchell',
-      role: 'Finance Manager',
-      avatar: 'SM',
-      avatarColor: '#0277BD',
-      message: `Hi! I need a monthly payroll report showing all employees with their department, job title, and salary. I need to be able to filter it by department. Can you build the data model for me?`
+      name: 'Kavya Rao',
+      role: 'AP Operations Lead',
+      avatar: 'KR',
+      avatarColor: '#C74634',
+      message: 'I need an unpaid invoice report for India BU. Show invoice number, supplier, invoice date, due date, and remaining amount. Only invoices that still have money due should appear.'
     },
     tasks: [
       {
         id: 1,
-        title: 'Write the base SQL',
-        instruction: 'Write a SELECT query that returns employee_id, full name, department_name, job_title, and salary from hr.employees joined with hr.departments and hr.jobs.',
-        hint: 'Join hr.employees to hr.departments on department_id, and to hr.jobs on job_id. Use concatenation for full name.',
+        title: 'Build the base AP join',
+        instruction: 'Write a query using AP_INVOICES_ALL as the starting table and join AP_SUPPLIERS and AP_PAYMENT_SCHEDULES_ALL.',
+        hint: 'Use ai.vendor_id = sup.vendor_id and ai.invoice_id = aps.invoice_id.',
         validation: {
           type: 'sql',
-          mustIncludeTables: ['hr.employees', 'hr.departments'],
-          mustIncludeColumns: ['SALARY', 'DEPARTMENT_NAME'],
+          mustIncludeTables: ['AP_INVOICES_ALL', 'AP_SUPPLIERS', 'AP_PAYMENT_SCHEDULES_ALL'],
           mustHaveJoin: true,
-          minRows: 5
+          mustIncludeColumns: ['INVOICE_NUM', 'VENDOR_NAME', 'AMOUNT_DUE_REMAINING'],
+          minRows: 3
         },
         points: 40
       },
       {
         id: 2,
-        title: 'Add a department parameter',
-        instruction: 'Modify your query to filter by department using a bind variable :p_department_id in the WHERE clause.',
-        hint: 'Add WHERE emp.department_id = :p_department_id to your query.',
+        title: 'Add the unpaid condition',
+        instruction: 'Filter the report so it returns only unpaid or partially paid invoices.',
+        hint: 'Use aps.amount_due_remaining > 0.',
         validation: {
           type: 'sql',
-          mustIncludeBinds: [':p_department_id'],
+          mustHaveWhere: true,
+          mustInclude: ['AMOUNT_DUE_REMAINING > 0']
+        },
+        points: 40
+      },
+      {
+        id: 3,
+        title: 'Add BU parameter',
+        instruction: 'Join HR_OPERATING_UNITS and filter for a runtime BU parameter called :p_bu_name.',
+        hint: 'Use ai.org_id = bu.organization_id and add bu.name = :p_bu_name.',
+        validation: {
+          type: 'sql',
+          mustIncludeTables: ['HR_OPERATING_UNITS'],
+          mustIncludeBinds: [':p_bu_name'],
+          mustHaveWhere: true
+        },
+        points: 30
+      },
+      {
+        id: 4,
+        title: 'Preview India BU invoices',
+        instruction: 'Run the query with :p_bu_name = India BU and verify the output contains only rows with remaining amount greater than zero.',
+        hint: 'Set the BU parameter to India BU before running.',
+        validation: {
+          type: 'execution',
+          paramValues: { p_bu_name: 'India BU' },
+          minRows: 2,
+          rowRules: [
+            { field: 'BU_NAME', operator: '=', value: 'India BU' },
+            { field: 'AMOUNT_DUE_REMAINING', operator: '>', value: 0 }
+          ]
+        },
+        points: 40
+      }
+    ],
+    outcome: {
+      pass: 'The AP data model is ready for BIP. Finance can now build the unpaid invoice layout on top of this dataset.',
+      fail: 'Review the invoice join path and make sure the remaining amount condition is taken from AP_PAYMENT_SCHEDULES_ALL.'
+    }
+  },
+  {
+    id: 'SC-AR-001',
+    moduleId: 'MOD-002',
+    domain: 'AR',
+    title: 'AR Open Receivables Data Model',
+    description: 'Create the data model for customer invoices that still have open balance.',
+    difficulty: 'Intermediate',
+    estimatedTime: '15 min',
+    pointsOnPass: 150,
+    persona: {
+      name: 'Nina Dsouza',
+      role: 'Collections Manager',
+      avatar: 'ND',
+      avatarColor: '#0277BD',
+      message: 'I need open receivables by customer for Vision Operations. Show transaction number, customer name, transaction date, due date, and remaining amount. Only items with open balance should appear.'
+    },
+    tasks: [
+      {
+        id: 1,
+        title: 'Build the AR join path',
+        instruction: 'Start from RA_CUSTOMER_TRX_ALL and join HZ_CUST_ACCOUNTS and AR_PAYMENT_SCHEDULES_ALL.',
+        hint: 'Use rct.bill_to_customer_id = hca.cust_account_id and rct.customer_trx_id = aps.customer_trx_id.',
+        validation: {
+          type: 'sql',
+          mustIncludeTables: ['RA_CUSTOMER_TRX_ALL', 'HZ_CUST_ACCOUNTS', 'AR_PAYMENT_SCHEDULES_ALL'],
+          mustHaveJoin: true,
+          mustIncludeColumns: ['TRX_NUMBER', 'CUSTOMER_NAME', 'AMOUNT_DUE_REMAINING'],
+          minRows: 3
+        },
+        points: 40
+      },
+      {
+        id: 2,
+        title: 'Filter open balance',
+        instruction: 'Return only receivables that still have amount due remaining.',
+        hint: 'Use aps.amount_due_remaining > 0.',
+        validation: {
+          type: 'sql',
+          mustHaveWhere: true,
+          mustInclude: ['AMOUNT_DUE_REMAINING > 0']
+        },
+        points: 35
+      },
+      {
+        id: 3,
+        title: 'Add BU parameter',
+        instruction: 'Join HR_OPERATING_UNITS and filter for :p_bu_name.',
+        hint: 'Use rct.org_id = bu.organization_id and bu.name = :p_bu_name.',
+        validation: {
+          type: 'sql',
+          mustIncludeTables: ['HR_OPERATING_UNITS'],
+          mustIncludeBinds: [':p_bu_name']
+        },
+        points: 35
+      },
+      {
+        id: 4,
+        title: 'Preview Vision Operations receivables',
+        instruction: 'Run the query with :p_bu_name = Vision Operations and verify all rows belong to that BU and have positive remaining amount.',
+        hint: 'Use Vision Operations as the test BU value.',
+        validation: {
+          type: 'execution',
+          paramValues: { p_bu_name: 'Vision Operations' },
+          minRows: 2,
+          rowRules: [
+            { field: 'BU_NAME', operator: '=', value: 'Vision Operations' },
+            { field: 'AMOUNT_DUE_REMAINING', operator: '>', value: 0 }
+          ]
+        },
+        points: 40
+      }
+    ],
+    outcome: {
+      pass: 'The AR open receivables data model is correct and ready for layout design.',
+      fail: 'Check the transaction-to-customer and transaction-to-payment-schedule joins, then validate the open balance condition.'
+    }
+  },
+  {
+    id: 'SC-GL-001',
+    moduleId: 'MOD-002',
+    domain: 'GL',
+    title: 'GL Trial Balance Data Model',
+    description: 'Build a trial balance dataset for a specific ledger and accounting period.',
+    difficulty: 'Intermediate',
+    estimatedTime: '15 min',
+    pointsOnPass: 150,
+    persona: {
+      name: 'Arun Menon',
+      role: 'GL Reporting Analyst',
+      avatar: 'AM',
+      avatarColor: '#2E7D32',
+      message: 'Create a trial balance for Vision Ledger for JAN-26. I need account combination, period name, entered debit, entered credit, and ending balance.'
+    },
+    tasks: [
+      {
+        id: 1,
+        title: 'Build the GL balance join',
+        instruction: 'Use GL_BALANCES as the starting table and join GL_CODE_COMBINATIONS and GL_LEDGERS.',
+        hint: 'Join on code_combination_id and ledger_id.',
+        validation: {
+          type: 'sql',
+          mustIncludeTables: ['GL_BALANCES', 'GL_CODE_COMBINATIONS', 'GL_LEDGERS'],
+          mustHaveJoin: true,
+          mustIncludeColumns: ['PERIOD_NAME', 'SEGMENT1', 'ENDING_BALANCE'],
+          minRows: 3
+        },
+        points: 40
+      },
+      {
+        id: 2,
+        title: 'Add ledger and period parameters',
+        instruction: 'Filter the trial balance using :p_ledger_name and :p_period_name.',
+        hint: 'Use gl.name = :p_ledger_name and gb.period_name = :p_period_name.',
+        validation: {
+          type: 'sql',
+          mustIncludeBinds: [':p_ledger_name', ':p_period_name'],
           mustHaveWhere: true
         },
         points: 40
       },
       {
         id: 3,
-        title: 'Sort the results',
-        instruction: 'Add an ORDER BY clause to sort results by department_name then last_name.',
-        hint: 'Add ORDER BY dept.department_name, emp.last_name at the end of the query.',
+        title: 'Sort by account segment',
+        instruction: 'Order the output by SEGMENT1 then SEGMENT2.',
+        hint: 'Use ORDER BY gcc.segment1, gcc.segment2.',
         validation: {
           type: 'sql',
           mustInclude: ['ORDER BY']
@@ -55,236 +210,24 @@ export const SCENARIOS = [
       },
       {
         id: 4,
-        title: 'Preview the data',
-        instruction: 'Run the query with department_id = 60 (IT department) and verify you get the right results.',
-        hint: 'Set :p_department_id to 60 in the parameters panel and click Run.',
+        title: 'Preview Vision Ledger JAN-26',
+        instruction: 'Run the query with Vision Ledger and JAN-26. Confirm you only see that ledger and period.',
+        hint: 'Set p_ledger_name = Vision Ledger and p_period_name = JAN-26.',
         validation: {
           type: 'execution',
-          paramValues: { p_department_id: 60 },
-          expectedDepartment: 'IT',
-          minRows: 3
-        },
-        points: 40
-      }
-    ],
-    outcome: {
-      pass: `Perfect work! The data model is exactly what the Finance team needs. Sarah can now design the payroll layout template on top of this. You've earned the Data Model badge!`,
-      fail: `The data model isn't quite right yet. Check that you're joining all three tables and your bind variable name matches exactly (:p_department_id).`
-    }
-  },
-
-  {
-    id: 'SC-002',
-    moduleId: 'MOD-002',
-    domain: 'GL',
-    title: 'Executive Headcount Query',
-    description: 'The CEO wants a quick headcount report grouped by department with average salary.',
-    difficulty: 'Intermediate',
-    estimatedTime: '10 min',
-    pointsOnPass: 120,
-    persona: {
-      name: 'James Okonkwo',
-      role: 'Chief Executive Officer',
-      avatar: 'JO',
-      avatarColor: '#C74634',
-      message: `I need a simple report — just show me each department, how many people are in it, and what the average salary is. Highest average first.`
-    },
-    tasks: [
-      {
-        id: 1,
-        title: 'Write a GROUP BY query',
-        instruction: 'Write a query that returns department_name, COUNT of employees, and AVG salary grouped by department. Order by average salary descending.',
-        hint: 'Use GROUP BY dept.department_name and aggregate functions COUNT(*) and AVG(emp.salary). Join employees to departments.',
-        validation: {
-          type: 'sql',
-          mustInclude: ['GROUP BY', 'COUNT', 'AVG'],
-          mustIncludeTables: ['hr.employees', 'hr.departments'],
-          mustHaveJoin: true,
-          minRows: 4
-        },
-        points: 80
-      },
-      {
-        id: 2,
-        title: 'Run and verify',
-        instruction: 'Execute the query and confirm you see at least 5 departments with headcount and average salary figures.',
-        hint: 'Click Run — no parameters needed for this query.',
-        validation: {
-          type: 'execution',
-          paramValues: {},
-          minRows: 5
-        },
-        points: 40
-      }
-    ],
-    outcome: {
-      pass: `Excellent! James now has exactly what he asked for. Clean, aggregated data ready for the executive dashboard layout.`,
-      fail: `Check that you have both COUNT and AVG functions and a GROUP BY clause. Make sure you're joining employees to departments.`
-    }
-  },
-
-  {
-    id: 'SC-003',
-    moduleId: 'MOD-002',
-    domain: 'AR',
-    title: 'High Earners Audit Report',
-    description: 'The Audit team needs a list of all employees earning above a threshold, with their manager details.',
-    difficulty: 'Advanced',
-    estimatedTime: '20 min',
-    pointsOnPass: 180,
-    persona: {
-      name: 'Priya Nair',
-      role: 'Internal Audit Lead',
-      avatar: 'PN',
-      avatarColor: '#2E7D32',
-      message: `We need to audit all employees whose salary exceeds a threshold we set at runtime. Show their name, department, salary, and their manager's name. This is for compliance so accuracy is critical.`
-    },
-    tasks: [
-      {
-        id: 1,
-        title: 'Self-join for manager name',
-        instruction: 'Write a query that joins hr.employees to itself to get the manager\'s full name. Include employee_id, full_name, department_name, salary, and manager_full_name.',
-        hint: 'Use emp for the employee and mgr for the manager alias. JOIN hr.employees mgr ON emp.manager_id = mgr.employee_id. Use LEFT JOIN so employees with no manager still appear.',
-        validation: {
-          type: 'sql',
-          mustIncludeTables: ['hr.employees'],
-          mustHaveJoin: true,
-          minRows: 3
-        },
-        points: 60
-      },
-      {
-        id: 2,
-        title: 'Add salary threshold parameter',
-        instruction: 'Add a WHERE clause filtering employees where salary >= :p_min_salary.',
-        hint: 'WHERE emp.salary >= :p_min_salary',
-        validation: {
-          type: 'sql',
-          mustIncludeBinds: [':p_min_salary'],
-          mustHaveWhere: true
-        },
-        points: 50
-      },
-      {
-        id: 3,
-        title: 'Test with threshold of 10000',
-        instruction: 'Run the query with :p_min_salary = 10000 and verify you see only high earners.',
-        hint: 'Set p_min_salary to 10000 in the parameters panel.',
-        validation: {
-          type: 'execution',
-          paramValues: { p_min_salary: 10000 },
-          minRows: 5,
-          allRowsMustMatch: { field: 'SALARY', operator: '>=', value: 10000 }
-        },
-        points: 70
-      }
-    ],
-    outcome: {
-      pass: `Outstanding! The audit report is complete. Priya's compliance team can now schedule this to run monthly with different salary thresholds.`,
-      fail: `Review the self-join syntax and make sure your bind variable is :p_min_salary. Run the query to check the salary filter is working correctly.`
-    }
-  },
-
-  {
-    id: 'SC-004',
-    moduleId: 'MOD-001',
-    domain: 'AP',
-    title: 'Choose the Right Output Format',
-    description: 'Three different stakeholders need the same report in different formats. Match the right format to each use case.',
-    difficulty: 'Beginner',
-    estimatedTime: '5 min',
-    pointsOnPass: 80,
-    persona: {
-      name: 'Omar Shaikh',
-      role: 'IT Support Analyst',
-      avatar: 'OS',
-      avatarColor: '#7B1FA2',
-      message: `I have three colleagues all asking for the same salary report but for different purposes. Can you help me figure out the right output format for each?`
-    },
-    tasks: [
-      {
-        id: 1,
-        title: 'Format selection quiz',
-        instruction: 'Answer the three format questions correctly to complete this scenario.',
-        hint: 'Think about what each person will DO with the report.',
-        validation: {
-          type: 'quiz',
-          questions: [
-            {
-              q: 'The payroll officer needs to print official payslips for every employee.',
-              options: ['CSV', 'HTML', 'PDF', 'Excel'],
-              answer: 2,
-              explanation: 'PDF preserves exact formatting and is suitable for printing official documents.'
-            },
-            {
-              q: 'The FP&A analyst wants to build pivot tables and charts from the salary data.',
-              options: ['PDF', 'Excel', 'HTML', 'eText'],
-              answer: 1,
-              explanation: 'Excel allows users to manipulate the data, build pivots, and create their own charts.'
-            },
-            {
-              q: 'An upstream HR system needs to consume the data as a flat file via SFTP.',
-              options: ['PDF', 'HTML', 'Excel', 'CSV'],
-              answer: 3,
-              explanation: 'CSV / eText formats are ideal for system integrations and flat-file transfers.'
-            }
+          paramValues: { p_ledger_name: 'Vision Ledger', p_period_name: 'JAN-26' },
+          minRows: 2,
+          rowRules: [
+            { field: 'LEDGER_NAME', operator: '=', value: 'Vision Ledger' },
+            { field: 'PERIOD_NAME', operator: '=', value: 'JAN-26' }
           ]
         },
-        points: 80
+        points: 40
       }
     ],
     outcome: {
-      pass: `Great instincts! Matching the output format to the use case is one of the most important decisions in BIP report design.`,
-      fail: `Not quite. Think about what each user will do with the output — print it, analyse it, or feed it to another system.`
-    }
-  },
-
-  {
-    id: 'SC-005',
-    moduleId: 'MOD-004',
-    domain: 'AP',
-    title: 'Configure a Bursting Query',
-    description: 'HR wants to email each department manager their own department\'s headcount report automatically.',
-    difficulty: 'Advanced',
-    estimatedTime: '20 min',
-    pointsOnPass: 200,
-    persona: {
-      name: 'Linda Fernandez',
-      role: 'HR Director',
-      avatar: 'LF',
-      avatarColor: '#E65100',
-      message: `Every month I want each department manager to automatically receive their own department's headcount report by email — not the full company report, just their slice. Can you set up the bursting configuration?`
-    },
-    tasks: [
-      {
-        id: 1,
-        title: 'Write the bursting query',
-        instruction: 'Write a SELECT query that returns the required BIP bursting columns: KEY, TEMPLATE, DELIVERY_CHANNEL, EMAIL_TO, EMAIL_FROM, EMAIL_SUBJECT, OUTPUT_FORMAT, LOCALE.',
-        hint: 'KEY should be department_id. EMAIL_TO should come from a manager email column. Use \'EMAIL\' as DELIVERY_CHANNEL and \'PDF\' as OUTPUT_FORMAT.',
-        validation: {
-          type: 'sql',
-          mustInclude: ['KEY', 'EMAIL_TO', 'DELIVERY_CHANNEL', 'OUTPUT_FORMAT'],
-          mustIncludeTables: ['hr.departments'],
-          minRows: 3
-        },
-        points: 100
-      },
-      {
-        id: 2,
-        title: 'Verify bursting output',
-        instruction: 'Run the bursting query and confirm each row has a unique KEY and an EMAIL_TO value.',
-        hint: 'Click Run — you should see one row per department.',
-        validation: {
-          type: 'execution',
-          paramValues: {},
-          minRows: 4
-        },
-        points: 100
-      }
-    ],
-    outcome: {
-      pass: `Excellent bursting configuration! Linda's team will now receive personalised department reports every month without any manual effort.`,
-      fail: `Check that your query includes all required bursting columns (KEY, DELIVERY_CHANNEL, EMAIL_TO, OUTPUT_FORMAT) and is selecting from hr.departments.`
+      pass: 'The GL trial balance dataset is ready for BIP publishing.',
+      fail: 'Make sure the balance table drives the query and the ledger/period filters are applied correctly.'
     }
   }
 ]

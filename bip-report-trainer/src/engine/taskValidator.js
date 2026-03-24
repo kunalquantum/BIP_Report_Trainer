@@ -144,6 +144,22 @@ export function validateScenarioTask(task, sql, execution, answers = []) {
     ))
   }
 
+  ;(validation.rowRules || []).forEach((rule) => {
+    const passed = rows.length > 0 && rows.every((row) => {
+      if (rule.operator === '>=') return Number(row[rule.field]) >= Number(rule.value)
+      if (rule.operator === '>') return Number(row[rule.field]) > Number(rule.value)
+      if (rule.operator === '=') return String(row[rule.field]) === String(rule.value)
+      return false
+    })
+
+    checks.push(check(
+      passed,
+      `${rule.field} ${rule.operator} ${rule.value}`,
+      `All returned rows satisfy ${rule.field} ${rule.operator} ${rule.value}.`,
+      `At least one row does not satisfy ${rule.field} ${rule.operator} ${rule.value}.`
+    ))
+  })
+
   if (includesText(sqlText, 'KEY') && includesText(sqlText, 'EMAIL_TO')) {
     const uniqueKeys = new Set(rows.map((row) => row.KEY))
     checks.push(check(

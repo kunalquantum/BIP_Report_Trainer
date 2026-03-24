@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useTrainer } from './context/TrainerContext'
 import { BIP_MODULES } from './data/modules'
+import { DOMAIN_LABS } from './data/domainLabs'
 import { SCENARIOS } from './data/scenarios'
 import { DOMAIN_BLUEPRINTS } from './data/foundations'
 import { getNextLevel, getProgressToNext } from './data/levels'
@@ -8,24 +9,6 @@ import { executeSQL, extractBindVariables } from './engine/sqlEngine'
 import { validateScenarioTask } from './engine/taskValidator'
 
 const DOMAIN_OPTIONS = ['All', 'AP', 'AR', 'GL']
-
-const DOMAIN_SCHEMAS = {
-  AP: {
-    label: 'Accounts Payable',
-    folders: ['Shared Folders', 'Financials', 'AP', 'Invoices', 'Supplier Statements'],
-    objects: ['AP Invoice Register.xdo', 'Supplier Aging.xdm', 'Payment Batch Layout.rtf']
-  },
-  AR: {
-    label: 'Accounts Receivable',
-    folders: ['Shared Folders', 'Financials', 'AR', 'Collections', 'Customer Statements'],
-    objects: ['AR Customer Balance.xdo', 'Receipts Analysis.xdm', 'Collections Summary.rtf']
-  },
-  GL: {
-    label: 'General Ledger',
-    folders: ['Shared Folders', 'Financials', 'GL', 'Journals', 'Trial Balance'],
-    objects: ['GL Trial Balance.xdo', 'Journal Extract.xdm', 'Balance Sheet Layout.rtf']
-  }
-}
 
 const PANEL_ROLES = [
   'Functional Expert',
@@ -57,10 +40,9 @@ const DOMAIN_STARTERS = {
 
 function getStarterSql(id) {
   const starters = {
-    'SC-001': "SELECT\n  emp.employee_id,\n  emp.first_name || ' ' || emp.last_name AS full_name,\n  dept.department_name,\n  job.job_title,\n  emp.salary\nFROM hr.employees emp\nJOIN hr.departments dept ON emp.department_id = dept.department_id\nJOIN hr.jobs job ON emp.job_id = job.job_id",
-    'SC-002': 'SELECT\n  dept.department_name,\n  COUNT(*) AS employee_count,\n  AVG(emp.salary) AS avg_salary\nFROM hr.employees emp\nJOIN hr.departments dept ON emp.department_id = dept.department_id\nGROUP BY dept.department_name',
-    'SC-003': "SELECT\n  emp.employee_id,\n  emp.first_name || ' ' || emp.last_name AS full_name,\n  dept.department_name,\n  emp.salary,\n  mgr.first_name || ' ' || mgr.last_name AS manager_full_name\nFROM hr.employees emp\nLEFT JOIN hr.employees mgr ON emp.manager_id = mgr.employee_id\nJOIN hr.departments dept ON emp.department_id = dept.department_id",
-    'SC-005': 'SELECT\n  department_id AS "KEY",\n  department_name AS "TEMPLATE",\n  \'EMAIL\' AS "DELIVERY_CHANNEL",\n  manager_email AS "EMAIL_TO",\n  \'payroll@corp.com\' AS "EMAIL_FROM",\n  \'Monthly Headcount Report\' AS "EMAIL_SUBJECT",\n  \'PDF\' AS "OUTPUT_FORMAT",\n  \'en-US\' AS "LOCALE"\nFROM hr.departments'
+    'SC-AP-001': "SELECT\n  ai.invoice_num,\n  ai.invoice_date,\n  sup.vendor_name,\n  aps.due_date,\n  aps.amount_due_remaining,\n  bu.name AS bu_name\nFROM ap_invoices_all ai\nJOIN ap_suppliers sup ON ai.vendor_id = sup.vendor_id\nJOIN ap_payment_schedules_all aps ON ai.invoice_id = aps.invoice_id\nJOIN hr_operating_units bu ON ai.org_id = bu.organization_id",
+    'SC-AR-001': "SELECT\n  rct.trx_number,\n  rct.trx_date,\n  hca.customer_name,\n  aps.due_date,\n  aps.amount_due_remaining,\n  bu.name AS bu_name\nFROM ra_customer_trx_all rct\nJOIN hz_cust_accounts hca ON rct.bill_to_customer_id = hca.cust_account_id\nJOIN ar_payment_schedules_all aps ON rct.customer_trx_id = aps.customer_trx_id\nJOIN hr_operating_units bu ON rct.org_id = bu.organization_id",
+    'SC-GL-001': "SELECT\n  gb.period_name,\n  gl.name AS ledger_name,\n  gcc.segment1,\n  gcc.segment2,\n  gb.entered_dr,\n  gb.entered_cr,\n  gb.ending_balance\nFROM gl_balances gb\nJOIN gl_code_combinations gcc ON gb.code_combination_id = gcc.code_combination_id\nJOIN gl_ledgers gl ON gb.ledger_id = gl.ledger_id"
   }
 
   return starters[id] || ''
@@ -82,6 +64,7 @@ function getCoachNotes(scenario) {
 export default function App() {
   const { state, dispatch, level, isScenarioDone } = useTrainer()
   const [domainFilter, setDomainFilter] = useState('All')
+  const [activeDomainLab, setActiveDomainLab] = useState(null)
 
   useEffect(() => {
     if (!state.notification) return
@@ -96,11 +79,21 @@ export default function App() {
       <main style={{ maxWidth: '1440px', margin: '0 auto', padding: '24px' }}>
         {state.currentScenario ? (
           <ScenarioWorkspace />
+        ) : activeDomainLab ? (
+          <DomainLab
+            domain={activeDomainLab}
+            onBack={() => setActiveDomainLab(null)}
+            onStartExercise={(scenario) => {
+              setActiveDomainLab(null)
+              dispatch({ type: 'START_SCENARIO', payload: scenario })
+            }}
+          />
         ) : (
           <Dashboard
             domainFilter={domainFilter}
             setDomainFilter={setDomainFilter}
             isScenarioDone={isScenarioDone}
+            onStartDomainLab={setActiveDomainLab}
           />
         )}
       </main>
@@ -141,7 +134,7 @@ function Header({ level }) {
   )
 }
 
-function Dashboard({ domainFilter, setDomainFilter, isScenarioDone }) {
+function Dashboard({ domainFilter, setDomainFilter, isScenarioDone, onStartDomainLab }) {
   const { state, dispatch, level } = useTrainer()
   const filteredScenarios = domainFilter === 'All'
     ? SCENARIOS
@@ -290,10 +283,10 @@ function Dashboard({ domainFilter, setDomainFilter, isScenarioDone }) {
                   "{featuredScenario.persona.message}"
                 </div>
                 <button
-                  onClick={() => dispatch({ type: 'START_SCENARIO', payload: featuredScenario })}
+                  onClick={() => onStartDomainLab(highlightedDomain)}
                   style={{ ...primaryButton, marginTop: '16px', width: '100%' }}
                 >
-                  Start {highlightedDomain} exercise
+                  Start {highlightedDomain} learning path
                 </button>
               </>
             ) : (
@@ -308,6 +301,228 @@ function Dashboard({ domainFilter, setDomainFilter, isScenarioDone }) {
   )
 }
 
+function DomainLab({ domain, onBack, onStartExercise }) {
+  const lab = DOMAIN_LABS[domain]
+  const blueprint = DOMAIN_BLUEPRINTS[domain] || DOMAIN_BLUEPRINTS.GL
+  const domainScenarios = SCENARIOS.filter((scenario) => scenario.domain === domain)
+  const [stepIndex, setStepIndex] = useState(0)
+  const [answers, setAnswers] = useState({})
+  const [feedback, setFeedback] = useState(null)
+  const stage = lab.stages[stepIndex]
+  const isLast = stepIndex === lab.stages.length - 1
+  const progress = Math.round(((stepIndex + 1) / lab.stages.length) * 100)
+
+  const goNext = () => {
+    setFeedback(null)
+    setStepIndex((current) => Math.min(current + 1, lab.stages.length - 1))
+  }
+
+  const goPrev = () => {
+    setFeedback(null)
+    setStepIndex((current) => Math.max(current - 1, 0))
+  }
+
+  const submitAnswer = () => {
+    if (stage.type !== 'quiz') return
+    const selected = answers[stage.id]
+    const passed = selected === stage.answer
+    setFeedback({
+      passed,
+      text: passed ? stage.feedback.correct : stage.feedback.incorrect
+    })
+  }
+
+  return (
+    <div style={{ display: 'grid', gridTemplateColumns: '300px minmax(0, 1fr)', gap: '20px', alignItems: 'start' }}>
+      <aside style={{
+        ...cardStyle,
+        background: 'linear-gradient(180deg, var(--oracle-navy) 0%, var(--oracle-navy-mid) 100%)',
+        color: 'white',
+        border: 'none'
+      }}>
+        <div style={{ fontSize: '12px', letterSpacing: '1px', textTransform: 'uppercase', opacity: 0.55 }}>
+          Domain Lab
+        </div>
+        <div style={{ marginTop: '8px', fontSize: '24px', fontWeight: 700 }}>
+          {lab.title}
+        </div>
+        <div style={{ marginTop: '8px', color: 'rgba(255,255,255,0.74)', lineHeight: 1.6 }}>
+          {blueprint.businessGoal}
+        </div>
+
+        <div style={{ marginTop: '18px', height: '8px', background: 'rgba(255,255,255,0.12)', borderRadius: '999px' }}>
+          <div style={{ width: `${progress}%`, height: '100%', background: 'var(--oracle-red)', borderRadius: '999px' }} />
+        </div>
+        <div style={{ marginTop: '8px', fontSize: '12px', color: 'rgba(255,255,255,0.72)' }}>
+          Step {stepIndex + 1} of {lab.stages.length}
+        </div>
+
+        <div style={{ marginTop: '18px', display: 'grid', gap: '8px' }}>
+          {lab.stages.map((item, index) => (
+            <div
+              key={item.id}
+              style={{
+                padding: '10px 12px',
+                borderRadius: '10px',
+                background: index === stepIndex ? 'rgba(199,70,52,0.18)' : 'rgba(255,255,255,0.05)',
+                border: index === stepIndex ? '1px solid rgba(232,93,69,0.45)' : '1px solid rgba(255,255,255,0.06)'
+              }}
+            >
+              <div style={{ fontSize: '12px', opacity: 0.65 }}>{index + 1}</div>
+              <div style={{ marginTop: '4px', fontWeight: 700 }}>{item.title}</div>
+            </div>
+          ))}
+        </div>
+
+        <button onClick={onBack} style={{ ...ghostButton, marginTop: '20px', width: '100%' }}>
+          Back to home
+        </button>
+      </aside>
+
+      <section style={{ display: 'grid', gap: '16px' }}>
+        <div style={cardStyle}>
+          <div style={{ fontSize: '12px', color: 'var(--oracle-red)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px' }}>
+            {stage.type === 'lesson' ? 'Micro Lesson' : 'Knowledge Check'}
+          </div>
+          <div style={{ marginTop: '8px', fontSize: '28px', fontWeight: 700, color: 'var(--oracle-navy)' }}>
+            {stage.title}
+          </div>
+
+          {stage.type === 'lesson' ? (
+            <>
+              <div style={{ marginTop: '14px', color: 'var(--oracle-text)', lineHeight: 1.8 }}>
+                {stage.body}
+              </div>
+              <div style={{ marginTop: '18px', display: 'grid', gap: '10px' }}>
+                {stage.takeaways.map((item) => (
+                  <div key={item} style={{ background: 'var(--oracle-silver)', borderLeft: '4px solid var(--oracle-accent)', borderRadius: '12px', padding: '12px', color: 'var(--oracle-text)' }}>
+                    {item}
+                  </div>
+                ))}
+              </div>
+            </>
+          ) : (
+            <>
+              <div style={{ marginTop: '14px', color: 'var(--oracle-text)', lineHeight: 1.8 }}>
+                {stage.prompt}
+              </div>
+              <div style={{ marginTop: '16px', display: 'grid', gap: '10px' }}>
+                {stage.options.map((option, optionIndex) => {
+                  const selected = answers[stage.id] === optionIndex
+                  return (
+                    <label
+                      key={option}
+                      style={{
+                        display: 'flex',
+                        gap: '10px',
+                        alignItems: 'flex-start',
+                        padding: '12px',
+                        borderRadius: '12px',
+                        border: `1px solid ${selected ? 'var(--oracle-red)' : 'var(--oracle-silver-mid)'}`,
+                        background: selected ? 'rgba(199,70,52,0.05)' : 'white'
+                      }}
+                    >
+                      <input
+                        type="radio"
+                        checked={selected}
+                        onChange={() => setAnswers((current) => ({ ...current, [stage.id]: optionIndex }))}
+                      />
+                      <span style={{ color: 'var(--oracle-text)', lineHeight: 1.6 }}>{option}</span>
+                    </label>
+                  )
+                })}
+              </div>
+            </>
+          )}
+
+          {feedback && (
+            <div style={{
+              marginTop: '16px',
+              borderRadius: '12px',
+              padding: '12px 14px',
+              background: feedback.passed ? 'rgba(46,125,50,0.08)' : 'rgba(199,70,52,0.08)',
+              border: `1px solid ${feedback.passed ? 'rgba(46,125,50,0.22)' : 'rgba(199,70,52,0.22)'}`,
+              color: 'var(--oracle-text)'
+            }}>
+              <strong style={{ color: feedback.passed ? 'var(--oracle-success)' : 'var(--oracle-red)' }}>
+                {feedback.passed ? 'Good answer' : 'Try again'}
+              </strong>
+              <div style={{ marginTop: '6px' }}>{feedback.text}</div>
+            </div>
+          )}
+
+          <div style={{ marginTop: '20px', display: 'flex', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap' }}>
+            <button onClick={goPrev} disabled={stepIndex === 0} style={{ ...secondaryButton, opacity: stepIndex === 0 ? 0.45 : 1 }}>
+              Previous
+            </button>
+
+            <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+              {stage.type === 'quiz' && (
+                <button
+                  onClick={submitAnswer}
+                  disabled={answers[stage.id] === undefined}
+                  style={{ ...ghostLightButton, opacity: answers[stage.id] === undefined ? 0.45 : 1 }}
+                >
+                  Check answer
+                </button>
+              )}
+
+              {isLast ? (
+                <button
+                  onClick={() => domainScenarios[0] && onStartExercise(domainScenarios[0])}
+                  disabled={!domainScenarios[0]}
+                  style={{ ...primaryButton, opacity: domainScenarios[0] ? 1 : 0.45 }}
+                >
+                  Start BIP exercise
+                </button>
+              ) : (
+                <button
+                  onClick={goNext}
+                  disabled={stage.type === 'quiz' && !feedback?.passed}
+                  style={{ ...primaryButton, opacity: stage.type === 'quiz' && !feedback?.passed ? 0.45 : 1 }}
+                >
+                  Next step
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+
+        <div style={{ ...cardStyle, display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '14px' }}>
+          <div>
+            <div style={{ fontSize: '12px', color: 'var(--oracle-text-light)', textTransform: 'uppercase', letterSpacing: '1px' }}>
+              Core tables
+            </div>
+            <div style={{ marginTop: '10px', display: 'grid', gap: '8px' }}>
+              {blueprint.coreTables.slice(0, 3).map((table) => (
+                <div key={table.name} style={{ background: 'var(--oracle-silver)', borderRadius: '10px', padding: '10px 12px' }}>
+                  <div style={{ fontWeight: 700, color: 'var(--oracle-navy)' }}>{table.name}</div>
+                  <div style={{ marginTop: '4px', color: 'var(--oracle-text-light)', lineHeight: 1.5 }}>{table.purpose}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <div style={{ fontSize: '12px', color: 'var(--oracle-text-light)', textTransform: 'uppercase', letterSpacing: '1px' }}>
+              Join pattern
+            </div>
+            <div style={{ marginTop: '10px', background: 'var(--oracle-silver)', borderLeft: '4px solid var(--oracle-red)', borderRadius: '10px', padding: '12px', color: 'var(--oracle-text)', lineHeight: 1.6 }}>
+              {blueprint.joinPatterns[0]}
+            </div>
+            <div style={{ marginTop: '12px', fontSize: '12px', color: 'var(--oracle-text-light)', textTransform: 'uppercase', letterSpacing: '1px' }}>
+              Key caution
+            </div>
+            <div style={{ marginTop: '8px', background: 'var(--oracle-silver)', borderRadius: '10px', padding: '12px', color: 'var(--oracle-text-light)', lineHeight: 1.6 }}>
+              {blueprint.cautions[0]}
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  )
+}
+
 function ScenarioWorkspace() {
   const { state, dispatch } = useTrainer()
   const scenario = state.currentScenario
@@ -315,7 +530,6 @@ function ScenarioWorkspace() {
   const workspace = state.scenarioWorkspace
   const [quizAnswers, setQuizAnswers] = useState([])
   const coachNotes = useMemo(() => getCoachNotes(scenario), [scenario])
-  const schema = DOMAIN_SCHEMAS[scenario.domain] || DOMAIN_SCHEMAS.GL
   const blueprint = DOMAIN_BLUEPRINTS[scenario.domain] || DOMAIN_BLUEPRINTS.GL
   const params = inferParams(task, workspace.sqlDraft)
   const taskDone = workspace.completedTaskIds.includes(task.id)
@@ -374,10 +588,9 @@ function ScenarioWorkspace() {
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '280px 340px minmax(0, 1fr)', gap: '20px', alignItems: 'start' }}>
-        <OracleSidebar domainFilter={scenario.domain} />
+      <div style={{ display: 'grid', gridTemplateColumns: '320px minmax(0, 1fr)', gap: '20px', alignItems: 'start' }}>
         <div style={{ display: 'grid', gap: '16px' }}>
-          <Panel title="Business Brief">
+          <Panel title="Mission Brief">
             <div style={{ color: 'var(--oracle-text)', lineHeight: 1.6 }}>
               <div style={{ fontWeight: 700, color: 'var(--oracle-navy)' }}>{scenario.persona.name}</div>
               <div style={{ fontSize: '13px', color: 'var(--oracle-text-light)', marginBottom: '10px' }}>{scenario.persona.role}</div>
@@ -402,44 +615,23 @@ function ScenarioWorkspace() {
                   </div>
                 )
               })}
-            </div>
-          </Panel>
+              </div>
+            </Panel>
 
-          <Panel title="Coach Notes">
+          <Panel title="Oracle Guidance">
             <div style={{ display: 'grid', gap: '10px' }}>
-              {coachNotes.map((step) => (
+              <div style={{ background: 'var(--oracle-silver)', borderLeft: '4px solid var(--oracle-red)', borderRadius: '12px', padding: '12px', color: 'var(--oracle-text)' }}>
+                <strong>Join path</strong>
+                <div style={{ marginTop: '6px', color: 'var(--oracle-text-light)', lineHeight: 1.5 }}>{blueprint.joinPatterns[0]}</div>
+              </div>
+              <div style={{ background: 'var(--oracle-silver)', borderLeft: '4px solid var(--oracle-accent)', borderRadius: '12px', padding: '12px', color: 'var(--oracle-text)' }}>
+                <strong>Business caution</strong>
+                <div style={{ marginTop: '6px', color: 'var(--oracle-text-light)', lineHeight: 1.5 }}>{blueprint.cautions[0]}</div>
+              </div>
+              {coachNotes.slice(0, 1).map((step) => (
                 <div key={step.id} style={{ background: 'var(--oracle-silver)', borderLeft: '4px solid var(--oracle-accent)', borderRadius: '12px', padding: '12px', color: 'var(--oracle-text)' }}>
                   <strong>{step.title}</strong>
                   <div style={{ marginTop: '6px', color: 'var(--oracle-text-light)', lineHeight: 1.5 }}>{step.content}</div>
-                </div>
-              ))}
-            </div>
-          </Panel>
-
-          <Panel title="Join Strategy">
-            <div style={{ display: 'grid', gap: '10px' }}>
-              {blueprint.joinPatterns.map((pattern) => (
-                <div key={pattern} style={{ background: 'var(--oracle-silver)', borderLeft: '4px solid var(--oracle-red)', borderRadius: '10px', padding: '10px 12px', color: 'var(--oracle-text)' }}>
-                  {pattern}
-                </div>
-              ))}
-            </div>
-            <div style={{ marginTop: '12px', fontSize: '13px', color: 'var(--oracle-text-light)', lineHeight: 1.6 }}>
-              Business goal: <strong style={{ color: 'var(--oracle-navy)' }}>{blueprint.businessGoal}</strong>
-            </div>
-          </Panel>
-
-          <Panel title="Business Logic Cautions">
-            <ul style={{ margin: '0 0 0 18px', color: 'var(--oracle-text-light)', lineHeight: 1.7 }}>
-              {blueprint.cautions.map((item) => <li key={item}>{item}</li>)}
-            </ul>
-          </Panel>
-
-          <Panel title="Catalog Objects">
-            <div style={{ display: 'grid', gap: '10px' }}>
-              {schema.objects.map((item) => (
-                <div key={item} style={{ borderRadius: '10px', background: 'var(--oracle-silver)', padding: '10px 12px', color: 'var(--oracle-text)' }}>
-                  {item}
                 </div>
               ))}
             </div>
@@ -631,93 +823,6 @@ function ResultsTable({ columns, rows }) {
   )
 }
 
-function OracleSidebar({ domainFilter, setDomainFilter }) {
-  const activeDomain = domainFilter === 'All' ? 'GL' : domainFilter
-  const schema = DOMAIN_SCHEMAS[activeDomain] || DOMAIN_SCHEMAS.GL
-
-  return (
-    <aside style={{
-      background: 'linear-gradient(180deg, var(--oracle-navy) 0%, var(--oracle-navy-mid) 100%)',
-      color: 'white',
-      borderRadius: '16px',
-      padding: '16px',
-      boxShadow: 'var(--shadow-card)',
-      border: '1px solid rgba(255,255,255,0.06)'
-    }}>
-      <div style={{ fontSize: '11px', letterSpacing: '1.2px', textTransform: 'uppercase', opacity: 0.55 }}>
-        Navigator
-      </div>
-      <div style={{ marginTop: '8px', fontSize: '18px', fontWeight: 700 }}>
-        Oracle BI Publisher
-      </div>
-
-      <div style={{ marginTop: '18px', display: 'grid', gap: '8px' }}>
-        {DOMAIN_OPTIONS.map((domain) => {
-          const active = domainFilter === domain
-          return (
-            <button
-              key={domain}
-              onClick={() => setDomainFilter?.(domain)}
-              disabled={!setDomainFilter}
-              style={{
-                textAlign: 'left',
-                padding: '10px 12px',
-                borderRadius: '10px',
-                border: `1px solid ${active ? 'rgba(232,93,69,0.65)' : 'rgba(255,255,255,0.08)'}`,
-                background: active ? 'rgba(199,70,52,0.18)' : 'rgba(255,255,255,0.04)',
-                color: 'white',
-                opacity: !setDomainFilter && !active ? 0.55 : 1,
-                cursor: setDomainFilter ? 'pointer' : 'default',
-                fontWeight: 700,
-                fontSize: '13px'
-              }}
-            >
-              {domain === 'All' ? 'All Financial Modules' : `${domain} - ${DOMAIN_SCHEMAS[domain].label}`}
-            </button>
-          )
-        })}
-      </div>
-
-      <div style={{ marginTop: '20px', paddingTop: '16px', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
-        <div style={{ fontSize: '11px', letterSpacing: '1px', textTransform: 'uppercase', opacity: 0.5 }}>
-          Catalog
-        </div>
-        <div style={{ marginTop: '10px', display: 'grid', gap: '8px' }}>
-          {schema.folders.map((folder, index) => (
-            <div
-              key={folder}
-              style={{
-                paddingLeft: `${index * 10}px`,
-                fontSize: '13px',
-                color: index === schema.folders.length - 1 ? 'white' : 'rgba(255,255,255,0.68)',
-                display: 'flex',
-                gap: '8px',
-                alignItems: 'center'
-              }}
-            >
-              <span style={{ color: 'var(--oracle-red-light)' }}>{index === schema.folders.length - 1 ? '>' : 'v'}</span>
-              <span>{folder}</span>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <div style={{ marginTop: '20px', paddingTop: '16px', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
-        <div style={{ fontSize: '11px', letterSpacing: '1px', textTransform: 'uppercase', opacity: 0.5 }}>
-          Recent Objects
-        </div>
-        <div style={{ marginTop: '10px', display: 'grid', gap: '8px' }}>
-          {schema.objects.map((item) => (
-            <div key={item} style={{ background: 'rgba(255,255,255,0.05)', borderRadius: '10px', padding: '9px 10px', fontSize: '12px', color: 'rgba(255,255,255,0.78)' }}>
-              {item}
-            </div>
-          ))}
-        </div>
-      </div>
-    </aside>
-  )
-}
-
 const headerCard = { background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '12px', padding: '14px 16px' }
 const cardStyle = { background: 'var(--oracle-white)', borderRadius: '16px', padding: '18px', boxShadow: 'var(--shadow-card)', border: '1px solid var(--oracle-silver-mid)' }
 const gridStyle = { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '18px' }
@@ -725,3 +830,4 @@ const emptyStyle = { border: '1px dashed var(--oracle-silver-dark)', borderRadiu
 const primaryButton = { background: 'var(--oracle-red)', border: 'none', color: 'white', borderRadius: '10px', padding: '11px 16px', fontSize: '14px', fontWeight: 700 }
 const secondaryButton = { background: 'var(--oracle-navy)', border: 'none', color: 'white', borderRadius: '10px', padding: '11px 16px', fontSize: '14px', fontWeight: 700 }
 const ghostButton = { background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.16)', color: 'white', borderRadius: '10px', padding: '11px 16px', fontSize: '14px', fontWeight: 700 }
+const ghostLightButton = { background: 'white', border: '1px solid var(--oracle-silver-mid)', color: 'var(--oracle-navy)', borderRadius: '10px', padding: '11px 16px', fontSize: '14px', fontWeight: 700 }

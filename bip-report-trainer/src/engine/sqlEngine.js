@@ -1,46 +1,56 @@
 const TABLES = {
-  'hr.employees': [
-    { EMPLOYEE_ID: 100, FIRST_NAME: 'Steven', LAST_NAME: 'King', DEPARTMENT_ID: 90, JOB_ID: 'AD_PRES', SALARY: 24000, HIRE_DATE: '17-JUN-1987', EMAIL: 'SKING@corp.com', MANAGER_ID: null },
-    { EMPLOYEE_ID: 101, FIRST_NAME: 'Neena', LAST_NAME: 'Kochar', DEPARTMENT_ID: 90, JOB_ID: 'AD_VP', SALARY: 17000, HIRE_DATE: '21-SEP-1989', EMAIL: 'NKOCHAR@corp.com', MANAGER_ID: 100 },
-    { EMPLOYEE_ID: 102, FIRST_NAME: 'Lex', LAST_NAME: 'De Haan', DEPARTMENT_ID: 90, JOB_ID: 'AD_VP', SALARY: 17000, HIRE_DATE: '13-JAN-1993', EMAIL: 'LDEHAAN@corp.com', MANAGER_ID: 100 },
-    { EMPLOYEE_ID: 103, FIRST_NAME: 'Alexander', LAST_NAME: 'Hunold', DEPARTMENT_ID: 60, JOB_ID: 'IT_PROG', SALARY: 9000, HIRE_DATE: '03-JAN-1990', EMAIL: 'AHUNOLD@corp.com', MANAGER_ID: 102 },
-    { EMPLOYEE_ID: 104, FIRST_NAME: 'Bruce', LAST_NAME: 'Ernst', DEPARTMENT_ID: 60, JOB_ID: 'IT_PROG', SALARY: 6000, HIRE_DATE: '21-MAY-1991', EMAIL: 'BERNST@corp.com', MANAGER_ID: 103 },
-    { EMPLOYEE_ID: 105, FIRST_NAME: 'David', LAST_NAME: 'Austin', DEPARTMENT_ID: 60, JOB_ID: 'IT_PROG', SALARY: 4800, HIRE_DATE: '25-JUN-1997', EMAIL: 'DAUSTIN@corp.com', MANAGER_ID: 103 },
-    { EMPLOYEE_ID: 106, FIRST_NAME: 'Valli', LAST_NAME: 'Pataballa', DEPARTMENT_ID: 60, JOB_ID: 'IT_PROG', SALARY: 4800, HIRE_DATE: '05-FEB-1998', EMAIL: 'VPATABAL@corp.com', MANAGER_ID: 103 },
-    { EMPLOYEE_ID: 107, FIRST_NAME: 'Diana', LAST_NAME: 'Lorentz', DEPARTMENT_ID: 60, JOB_ID: 'IT_PROG', SALARY: 4200, HIRE_DATE: '07-FEB-1999', EMAIL: 'DLORENTZ@corp.com', MANAGER_ID: 103 },
-    { EMPLOYEE_ID: 108, FIRST_NAME: 'Nancy', LAST_NAME: 'Greenberg', DEPARTMENT_ID: 100, JOB_ID: 'FI_MGR', SALARY: 12000, HIRE_DATE: '17-AUG-1994', EMAIL: 'NGREENBE@corp.com', MANAGER_ID: 101 },
-    { EMPLOYEE_ID: 109, FIRST_NAME: 'Daniel', LAST_NAME: 'Faviet', DEPARTMENT_ID: 100, JOB_ID: 'FI_ACCOUNT', SALARY: 9000, HIRE_DATE: '16-AUG-1994', EMAIL: 'DFAVIET@corp.com', MANAGER_ID: 108 },
-    { EMPLOYEE_ID: 110, FIRST_NAME: 'John', LAST_NAME: 'Chen', DEPARTMENT_ID: 100, JOB_ID: 'FI_ACCOUNT', SALARY: 8200, HIRE_DATE: '28-SEP-1997', EMAIL: 'JCHEN@corp.com', MANAGER_ID: 108 },
-    { EMPLOYEE_ID: 111, FIRST_NAME: 'Ismael', LAST_NAME: 'Sciarra', DEPARTMENT_ID: 100, JOB_ID: 'FI_ACCOUNT', SALARY: 7700, HIRE_DATE: '30-SEP-1997', EMAIL: 'ISCIARRA@corp.com', MANAGER_ID: 108 },
-    { EMPLOYEE_ID: 112, FIRST_NAME: 'Jose', LAST_NAME: 'Urman', DEPARTMENT_ID: 100, JOB_ID: 'FI_ACCOUNT', SALARY: 7800, HIRE_DATE: '07-MAR-1998', EMAIL: 'JMURMAN@corp.com', MANAGER_ID: 108 },
-    { EMPLOYEE_ID: 114, FIRST_NAME: 'Den', LAST_NAME: 'Raphaely', DEPARTMENT_ID: 30, JOB_ID: 'PU_MAN', SALARY: 11000, HIRE_DATE: '07-DEC-1994', EMAIL: 'DRAPHEAL@corp.com', MANAGER_ID: 100 },
-    { EMPLOYEE_ID: 115, FIRST_NAME: 'Alexander', LAST_NAME: 'Khoo', DEPARTMENT_ID: 30, JOB_ID: 'PU_CLERK', SALARY: 3100, HIRE_DATE: '18-MAY-1995', EMAIL: 'AKHOO@corp.com', MANAGER_ID: 114 },
-    { EMPLOYEE_ID: 116, FIRST_NAME: 'Shelli', LAST_NAME: 'Baida', DEPARTMENT_ID: 30, JOB_ID: 'PU_CLERK', SALARY: 2900, HIRE_DATE: '24-DEC-1997', EMAIL: 'SBAIDA@corp.com', MANAGER_ID: 114 },
-    { EMPLOYEE_ID: 145, FIRST_NAME: 'John', LAST_NAME: 'Russell', DEPARTMENT_ID: 80, JOB_ID: 'SA_MAN', SALARY: 14000, HIRE_DATE: '01-OCT-1996', EMAIL: 'JRUSSEL@corp.com', MANAGER_ID: 100 },
-    { EMPLOYEE_ID: 146, FIRST_NAME: 'Karen', LAST_NAME: 'Partners', DEPARTMENT_ID: 80, JOB_ID: 'SA_MAN', SALARY: 13500, HIRE_DATE: '05-JAN-1997', EMAIL: 'KPARTNER@corp.com', MANAGER_ID: 100 },
-    { EMPLOYEE_ID: 150, FIRST_NAME: 'Peter', LAST_NAME: 'Tucker', DEPARTMENT_ID: 80, JOB_ID: 'SA_REP', SALARY: 10000, HIRE_DATE: '30-JAN-1997', EMAIL: 'PTUCKER@corp.com', MANAGER_ID: 145 },
-    { EMPLOYEE_ID: 200, FIRST_NAME: 'Jennifer', LAST_NAME: 'Whalen', DEPARTMENT_ID: 10, JOB_ID: 'AD_ASST', SALARY: 4400, HIRE_DATE: '17-SEP-1987', EMAIL: 'JWHALEN@corp.com', MANAGER_ID: 101 }
+  AP_INVOICES_ALL: [
+    { INVOICE_ID: 101, INVOICE_NUM: 'INV-1001', INVOICE_DATE: '2026-01-04', VENDOR_ID: 1, ORG_ID: 204, INVOICE_AMOUNT: 15000, INVOICE_CURRENCY_CODE: 'INR' },
+    { INVOICE_ID: 102, INVOICE_NUM: 'INV-1002', INVOICE_DATE: '2026-01-09', VENDOR_ID: 2, ORG_ID: 204, INVOICE_AMOUNT: 9200, INVOICE_CURRENCY_CODE: 'INR' },
+    { INVOICE_ID: 103, INVOICE_NUM: 'INV-1003', INVOICE_DATE: '2026-01-15', VENDOR_ID: 3, ORG_ID: 205, INVOICE_AMOUNT: 11800, INVOICE_CURRENCY_CODE: 'USD' },
+    { INVOICE_ID: 104, INVOICE_NUM: 'INV-1004', INVOICE_DATE: '2026-01-18', VENDOR_ID: 1, ORG_ID: 205, INVOICE_AMOUNT: 6500, INVOICE_CURRENCY_CODE: 'USD' }
   ],
-  'hr.departments': [
-    { DEPARTMENT_ID: 10, DEPARTMENT_NAME: 'Administration', MANAGER_ID: 200, LOCATION_ID: 1700 },
-    { DEPARTMENT_ID: 30, DEPARTMENT_NAME: 'Purchasing', MANAGER_ID: 114, LOCATION_ID: 1700 },
-    { DEPARTMENT_ID: 60, DEPARTMENT_NAME: 'IT', MANAGER_ID: 103, LOCATION_ID: 1400 },
-    { DEPARTMENT_ID: 80, DEPARTMENT_NAME: 'Sales', MANAGER_ID: 145, LOCATION_ID: 2500 },
-    { DEPARTMENT_ID: 90, DEPARTMENT_NAME: 'Executive', MANAGER_ID: 100, LOCATION_ID: 1700 },
-    { DEPARTMENT_ID: 100, DEPARTMENT_NAME: 'Finance', MANAGER_ID: 108, LOCATION_ID: 1700 },
-    { DEPARTMENT_ID: 110, DEPARTMENT_NAME: 'Accounting', MANAGER_ID: null, LOCATION_ID: 1700 }
+  AP_SUPPLIERS: [
+    { VENDOR_ID: 1, VENDOR_NAME: 'Apex Industrial Supplies', SEGMENT1: 'SUP-1001' },
+    { VENDOR_ID: 2, VENDOR_NAME: 'Blue River Logistics', SEGMENT1: 'SUP-1002' },
+    { VENDOR_ID: 3, VENDOR_NAME: 'Northwind Components', SEGMENT1: 'SUP-1003' }
   ],
-  'hr.jobs': [
-    { JOB_ID: 'AD_PRES', JOB_TITLE: 'President', MIN_SALARY: 20000, MAX_SALARY: 40000 },
-    { JOB_ID: 'AD_VP', JOB_TITLE: 'Administration Vice President', MIN_SALARY: 15000, MAX_SALARY: 30000 },
-    { JOB_ID: 'IT_PROG', JOB_TITLE: 'Programmer', MIN_SALARY: 4000, MAX_SALARY: 10000 },
-    { JOB_ID: 'FI_MGR', JOB_TITLE: 'Finance Manager', MIN_SALARY: 8200, MAX_SALARY: 16000 },
-    { JOB_ID: 'FI_ACCOUNT', JOB_TITLE: 'Accountant', MIN_SALARY: 4200, MAX_SALARY: 9000 },
-    { JOB_ID: 'PU_MAN', JOB_TITLE: 'Purchasing Manager', MIN_SALARY: 8000, MAX_SALARY: 15000 },
-    { JOB_ID: 'PU_CLERK', JOB_TITLE: 'Purchasing Clerk', MIN_SALARY: 2500, MAX_SALARY: 5500 },
-    { JOB_ID: 'SA_MAN', JOB_TITLE: 'Sales Manager', MIN_SALARY: 10000, MAX_SALARY: 20000 },
-    { JOB_ID: 'SA_REP', JOB_TITLE: 'Sales Representative', MIN_SALARY: 6000, MAX_SALARY: 12000 },
-    { JOB_ID: 'AD_ASST', JOB_TITLE: 'Administration Assistant', MIN_SALARY: 3000, MAX_SALARY: 6000 }
+  AP_PAYMENT_SCHEDULES_ALL: [
+    { INVOICE_ID: 101, DUE_DATE: '2026-02-02', AMOUNT_DUE_REMAINING: 15000 },
+    { INVOICE_ID: 102, DUE_DATE: '2026-02-08', AMOUNT_DUE_REMAINING: 2400 },
+    { INVOICE_ID: 103, DUE_DATE: '2026-02-12', AMOUNT_DUE_REMAINING: 0 },
+    { INVOICE_ID: 104, DUE_DATE: '2026-02-19', AMOUNT_DUE_REMAINING: 6500 }
+  ],
+  RA_CUSTOMER_TRX_ALL: [
+    { CUSTOMER_TRX_ID: 201, TRX_NUMBER: 'AR-2001', TRX_DATE: '2026-01-05', BILL_TO_CUSTOMER_ID: 11, ORG_ID: 205, TRX_AMOUNT: 18200 },
+    { CUSTOMER_TRX_ID: 202, TRX_NUMBER: 'AR-2002', TRX_DATE: '2026-01-11', BILL_TO_CUSTOMER_ID: 12, ORG_ID: 205, TRX_AMOUNT: 9400 },
+    { CUSTOMER_TRX_ID: 203, TRX_NUMBER: 'AR-2003', TRX_DATE: '2026-01-14', BILL_TO_CUSTOMER_ID: 13, ORG_ID: 204, TRX_AMOUNT: 7200 },
+    { CUSTOMER_TRX_ID: 204, TRX_NUMBER: 'AR-2004', TRX_DATE: '2026-01-21', BILL_TO_CUSTOMER_ID: 11, ORG_ID: 205, TRX_AMOUNT: 12100 }
+  ],
+  HZ_CUST_ACCOUNTS: [
+    { CUST_ACCOUNT_ID: 11, CUSTOMER_NAME: 'Vision Retail India' },
+    { CUST_ACCOUNT_ID: 12, CUSTOMER_NAME: 'Skyline Services LLC' },
+    { CUST_ACCOUNT_ID: 13, CUSTOMER_NAME: 'Meridian Tech GmbH' }
+  ],
+  AR_PAYMENT_SCHEDULES_ALL: [
+    { CUSTOMER_TRX_ID: 201, DUE_DATE: '2026-02-04', AMOUNT_DUE_REMAINING: 18200 },
+    { CUSTOMER_TRX_ID: 202, DUE_DATE: '2026-02-10', AMOUNT_DUE_REMAINING: 1800 },
+    { CUSTOMER_TRX_ID: 203, DUE_DATE: '2026-02-16', AMOUNT_DUE_REMAINING: 0 },
+    { CUSTOMER_TRX_ID: 204, DUE_DATE: '2026-02-25', AMOUNT_DUE_REMAINING: 12100 }
+  ],
+  GL_BALANCES: [
+    { LEDGER_ID: 301, CODE_COMBINATION_ID: 401, PERIOD_NAME: 'JAN-26', ENTERED_DR: 250000, ENTERED_CR: 0, ENDING_BALANCE: 250000 },
+    { LEDGER_ID: 301, CODE_COMBINATION_ID: 402, PERIOD_NAME: 'JAN-26', ENTERED_DR: 0, ENTERED_CR: 180000, ENDING_BALANCE: -180000 },
+    { LEDGER_ID: 301, CODE_COMBINATION_ID: 403, PERIOD_NAME: 'JAN-26', ENTERED_DR: 95000, ENTERED_CR: 0, ENDING_BALANCE: 95000 },
+    { LEDGER_ID: 302, CODE_COMBINATION_ID: 401, PERIOD_NAME: 'JAN-26', ENTERED_DR: 48000, ENTERED_CR: 0, ENDING_BALANCE: 48000 }
+  ],
+  GL_CODE_COMBINATIONS: [
+    { CODE_COMBINATION_ID: 401, SEGMENT1: '1000', SEGMENT2: '000', SEGMENT3: '1100', ACCOUNT_DESCRIPTION: 'Cash' },
+    { CODE_COMBINATION_ID: 402, SEGMENT1: '2000', SEGMENT2: '000', SEGMENT3: '2100', ACCOUNT_DESCRIPTION: 'Accounts Payable' },
+    { CODE_COMBINATION_ID: 403, SEGMENT1: '4000', SEGMENT2: '000', SEGMENT3: '4100', ACCOUNT_DESCRIPTION: 'Revenue' }
+  ],
+  GL_LEDGERS: [
+    { LEDGER_ID: 301, NAME: 'Vision Ledger', CURRENCY_CODE: 'USD' },
+    { LEDGER_ID: 302, NAME: 'India Ledger', CURRENCY_CODE: 'INR' }
+  ],
+  HR_OPERATING_UNITS: [
+    { ORGANIZATION_ID: 204, NAME: 'India BU' },
+    { ORGANIZATION_ID: 205, NAME: 'Vision Operations' }
   ]
 }
 
@@ -48,12 +58,11 @@ const REQUIRED_KEYWORDS = ['SELECT', 'FROM']
 const DANGEROUS_KEYWORDS = ['DROP', 'DELETE', 'TRUNCATE', 'INSERT', 'UPDATE', 'ALTER', 'CREATE', 'GRANT', 'REVOKE']
 const KNOWN_TABLES = Object.keys(TABLES)
 const KNOWN_FIELDS = [
-  'EMPLOYEE_ID', 'FIRST_NAME', 'LAST_NAME', 'FULL_NAME', 'EMAIL',
-  'DEPARTMENT_ID', 'DEPARTMENT_NAME', 'JOB_ID', 'JOB_TITLE', 'SALARY',
-  'HIRE_DATE', 'MANAGER_ID', 'MANAGER_FULL_NAME', 'MANAGER_EMAIL',
-  'EMPLOYEE_COUNT', 'HEADCOUNT', 'AVG_SALARY', 'KEY', 'TEMPLATE',
-  'DELIVERY_CHANNEL', 'EMAIL_TO', 'EMAIL_FROM', 'EMAIL_SUBJECT',
-  'OUTPUT_FORMAT', 'LOCALE'
+  'INVOICE_ID', 'INVOICE_NUM', 'INVOICE_DATE', 'VENDOR_ID', 'VENDOR_NAME', 'DUE_DATE', 'AMOUNT_DUE_REMAINING',
+  'BU_NAME', 'CUSTOMER_TRX_ID', 'TRX_NUMBER', 'TRX_DATE', 'CUSTOMER_NAME', 'TRX_AMOUNT',
+  'LEDGER_NAME', 'PERIOD_NAME', 'SEGMENT1', 'SEGMENT2', 'SEGMENT3', 'ACCOUNT_DESCRIPTION',
+  'ENTERED_DR', 'ENTERED_CR', 'ENDING_BALANCE',
+  'KEY', 'TEMPLATE', 'DELIVERY_CHANNEL', 'EMAIL_TO', 'EMAIL_FROM', 'EMAIL_SUBJECT', 'OUTPUT_FORMAT', 'LOCALE'
 ]
 
 function tokenise(sql) {
@@ -62,7 +71,7 @@ function tokenise(sql) {
 
 function extractTableNames(sql) {
   const upper = sql.toUpperCase()
-  return KNOWN_TABLES.filter((table) => upper.includes(table.toUpperCase()))
+  return KNOWN_TABLES.filter((table) => upper.includes(table))
 }
 
 export function extractBindVariables(sql) {
@@ -70,42 +79,86 @@ export function extractBindVariables(sql) {
   return [...new Set(matches)]
 }
 
-function buildEmployeeRows() {
-  return TABLES['hr.employees'].map((employee) => {
-    const department = TABLES['hr.departments'].find((item) => item.DEPARTMENT_ID === employee.DEPARTMENT_ID) || {}
-    const job = TABLES['hr.jobs'].find((item) => item.JOB_ID === employee.JOB_ID) || {}
-    const manager = TABLES['hr.employees'].find((item) => item.EMPLOYEE_ID === employee.MANAGER_ID) || null
+function buildApRows() {
+  return TABLES.AP_INVOICES_ALL.map((invoice) => {
+    const supplier = TABLES.AP_SUPPLIERS.find((item) => item.VENDOR_ID === invoice.VENDOR_ID) || {}
+    const schedule = TABLES.AP_PAYMENT_SCHEDULES_ALL.find((item) => item.INVOICE_ID === invoice.INVOICE_ID) || {}
+    const bu = TABLES.HR_OPERATING_UNITS.find((item) => item.ORGANIZATION_ID === invoice.ORG_ID) || {}
 
     return {
-      ...employee,
-      FULL_NAME: `${employee.FIRST_NAME} ${employee.LAST_NAME}`,
-      DEPARTMENT_NAME: department.DEPARTMENT_NAME || 'Unknown',
-      JOB_TITLE: job.JOB_TITLE || 'Unknown',
-      MANAGER_FULL_NAME: manager ? `${manager.FIRST_NAME} ${manager.LAST_NAME}` : null,
-      MANAGER_EMAIL: manager ? manager.EMAIL : null
+      ...invoice,
+      VENDOR_NAME: supplier.VENDOR_NAME,
+      SUPPLIER_NUM: supplier.SEGMENT1,
+      DUE_DATE: schedule.DUE_DATE,
+      AMOUNT_DUE_REMAINING: schedule.AMOUNT_DUE_REMAINING,
+      BU_NAME: bu.NAME
     }
   })
 }
 
-function applyWhere(rows, sql, params) {
+function buildArRows() {
+  return TABLES.RA_CUSTOMER_TRX_ALL.map((trx) => {
+    const customer = TABLES.HZ_CUST_ACCOUNTS.find((item) => item.CUST_ACCOUNT_ID === trx.BILL_TO_CUSTOMER_ID) || {}
+    const schedule = TABLES.AR_PAYMENT_SCHEDULES_ALL.find((item) => item.CUSTOMER_TRX_ID === trx.CUSTOMER_TRX_ID) || {}
+    const bu = TABLES.HR_OPERATING_UNITS.find((item) => item.ORGANIZATION_ID === trx.ORG_ID) || {}
+
+    return {
+      ...trx,
+      CUSTOMER_NAME: customer.CUSTOMER_NAME,
+      DUE_DATE: schedule.DUE_DATE,
+      AMOUNT_DUE_REMAINING: schedule.AMOUNT_DUE_REMAINING,
+      BU_NAME: bu.NAME
+    }
+  })
+}
+
+function buildGlRows() {
+  return TABLES.GL_BALANCES.map((balance) => {
+    const combination = TABLES.GL_CODE_COMBINATIONS.find((item) => item.CODE_COMBINATION_ID === balance.CODE_COMBINATION_ID) || {}
+    const ledger = TABLES.GL_LEDGERS.find((item) => item.LEDGER_ID === balance.LEDGER_ID) || {}
+
+    return {
+      ...balance,
+      LEDGER_NAME: ledger.NAME,
+      SEGMENT1: combination.SEGMENT1,
+      SEGMENT2: combination.SEGMENT2,
+      SEGMENT3: combination.SEGMENT3,
+      ACCOUNT_DESCRIPTION: combination.ACCOUNT_DESCRIPTION
+    }
+  })
+}
+
+function buildBurstingRows() {
+  return TABLES.HR_OPERATING_UNITS.map((bu) => ({
+    KEY: bu.ORGANIZATION_ID,
+    TEMPLATE: bu.NAME,
+    DELIVERY_CHANNEL: 'EMAIL',
+    EMAIL_TO: bu.NAME === 'India BU' ? 'ap-india@corp.com' : 'finops@corp.com',
+    EMAIL_FROM: 'bip@corp.com',
+    EMAIL_SUBJECT: `Aging Report - ${bu.NAME}`,
+    OUTPUT_FORMAT: 'PDF',
+    LOCALE: 'en-US'
+  }))
+}
+
+function applyBindFilters(rows, params) {
+  let filtered = [...rows]
+
+  if (params.p_bu_name) filtered = filtered.filter((row) => row.BU_NAME === params.p_bu_name)
+  if (params.p_ledger_name) filtered = filtered.filter((row) => row.LEDGER_NAME === params.p_ledger_name)
+  if (params.p_period_name) filtered = filtered.filter((row) => row.PERIOD_NAME === params.p_period_name)
+
+  return filtered
+}
+
+function applyLiteralFilters(rows, sql) {
   const upper = sql.toUpperCase()
   let filtered = [...rows]
 
-  if (params.p_department_id !== undefined && params.p_department_id !== '') {
-    filtered = filtered.filter((row) => row.DEPARTMENT_ID === Number(params.p_department_id))
-  }
-  if (params.p_min_salary !== undefined && params.p_min_salary !== '') {
-    filtered = filtered.filter((row) => row.SALARY >= Number(params.p_min_salary))
-  }
-  if (params.p_max_salary !== undefined && params.p_max_salary !== '') {
-    filtered = filtered.filter((row) => row.SALARY <= Number(params.p_max_salary))
-  }
-
-  if (upper.includes('DEPARTMENT_ID = 60')) filtered = filtered.filter((row) => row.DEPARTMENT_ID === 60)
-  if (upper.includes('DEPARTMENT_ID = 90')) filtered = filtered.filter((row) => row.DEPARTMENT_ID === 90)
-  if (upper.includes('DEPARTMENT_ID = 100')) filtered = filtered.filter((row) => row.DEPARTMENT_ID === 100)
-  if (upper.includes('SALARY > 10000')) filtered = filtered.filter((row) => row.SALARY > 10000)
-  if (upper.includes('SALARY >= 10000')) filtered = filtered.filter((row) => row.SALARY >= 10000)
+  if (upper.includes('AMOUNT_DUE_REMAINING > 0')) filtered = filtered.filter((row) => Number(row.AMOUNT_DUE_REMAINING || 0) > 0)
+  if (upper.includes("BU.NAME = 'INDIA BU'") || upper.includes("BU_NAME = 'INDIA BU'")) filtered = filtered.filter((row) => row.BU_NAME === 'India BU')
+  if (upper.includes("GL.NAME = 'VISION LEDGER'") || upper.includes("LEDGER_NAME = 'VISION LEDGER'")) filtered = filtered.filter((row) => row.LEDGER_NAME === 'Vision Ledger')
+  if (upper.includes("GB.PERIOD_NAME = 'JAN-26'") || upper.includes("PERIOD_NAME = 'JAN-26'")) filtered = filtered.filter((row) => row.PERIOD_NAME === 'JAN-26')
 
   return filtered
 }
@@ -113,76 +166,20 @@ function applyWhere(rows, sql, params) {
 function applyOrderBy(rows, sql) {
   const upper = sql.toUpperCase()
   if (!upper.includes('ORDER BY')) return rows
-
   const sorted = [...rows]
 
-  if (upper.includes('AVG') && upper.includes('DESC')) {
-    return sorted.sort((a, b) => (b.AVG_SALARY || 0) - (a.AVG_SALARY || 0))
-  }
-  if (upper.includes('DEPARTMENT_NAME') && upper.includes('LAST_NAME')) {
+  if (upper.includes('SEGMENT1') && upper.includes('SEGMENT2')) {
     return sorted.sort((a, b) => {
-      const byDepartment = String(a.DEPARTMENT_NAME).localeCompare(String(b.DEPARTMENT_NAME))
-      return byDepartment !== 0 ? byDepartment : String(a.LAST_NAME).localeCompare(String(b.LAST_NAME))
+      const first = String(a.SEGMENT1).localeCompare(String(b.SEGMENT1))
+      return first !== 0 ? first : String(a.SEGMENT2).localeCompare(String(b.SEGMENT2))
     })
   }
-  if (upper.includes('SALARY DESC')) {
-    return sorted.sort((a, b) => (b.SALARY || 0) - (a.SALARY || 0))
-  }
-  if (upper.includes('SALARY')) {
-    return sorted.sort((a, b) => (a.SALARY || 0) - (b.SALARY || 0))
-  }
-  if (upper.includes('LAST_NAME')) {
-    return sorted.sort((a, b) => String(a.LAST_NAME).localeCompare(String(b.LAST_NAME)))
-  }
-  if (upper.includes('DEPARTMENT_NAME')) {
-    return sorted.sort((a, b) => String(a.DEPARTMENT_NAME).localeCompare(String(b.DEPARTMENT_NAME)))
-  }
+
+  if (upper.includes('DUE_DATE')) return sorted.sort((a, b) => String(a.DUE_DATE).localeCompare(String(b.DUE_DATE)))
+  if (upper.includes('INVOICE_DATE')) return sorted.sort((a, b) => String(a.INVOICE_DATE).localeCompare(String(b.INVOICE_DATE)))
+  if (upper.includes('TRX_DATE')) return sorted.sort((a, b) => String(a.TRX_DATE).localeCompare(String(b.TRX_DATE)))
 
   return sorted
-}
-
-function aggregateDepartmentStats(rows) {
-  return Object.values(rows.reduce((groups, row) => {
-    const key = row.DEPARTMENT_ID
-    if (!groups[key]) {
-      groups[key] = {
-        DEPARTMENT_ID: row.DEPARTMENT_ID,
-        DEPARTMENT_NAME: row.DEPARTMENT_NAME,
-        EMPLOYEE_COUNT: 0,
-        HEADCOUNT: 0,
-        salaryTotal: 0
-      }
-    }
-
-    groups[key].EMPLOYEE_COUNT += 1
-    groups[key].HEADCOUNT += 1
-    groups[key].salaryTotal += row.SALARY
-    return groups
-  }, {})).map((group) => ({
-    DEPARTMENT_ID: group.DEPARTMENT_ID,
-    DEPARTMENT_NAME: group.DEPARTMENT_NAME,
-    EMPLOYEE_COUNT: group.EMPLOYEE_COUNT,
-    HEADCOUNT: group.HEADCOUNT,
-    AVG_SALARY: Math.round(group.salaryTotal / group.EMPLOYEE_COUNT)
-  }))
-}
-
-function buildBurstingRows() {
-  return TABLES['hr.departments']
-    .map((department) => {
-      const manager = TABLES['hr.employees'].find((employee) => employee.EMPLOYEE_ID === department.MANAGER_ID)
-      return {
-        KEY: department.DEPARTMENT_ID,
-        TEMPLATE: department.DEPARTMENT_NAME,
-        DELIVERY_CHANNEL: 'EMAIL',
-        EMAIL_TO: manager?.EMAIL || null,
-        EMAIL_FROM: 'payroll@corp.com',
-        EMAIL_SUBJECT: `Monthly Headcount Report - ${department.DEPARTMENT_NAME}`,
-        OUTPUT_FORMAT: 'PDF',
-        LOCALE: 'en-US'
-      }
-    })
-    .filter((row) => row.EMAIL_TO)
 }
 
 function pickColumns(rows, sql) {
@@ -191,14 +188,7 @@ function pickColumns(rows, sql) {
 
   const requested = KNOWN_FIELDS.filter((field) => upper.includes(field))
 
-  if (requested.length === 0) {
-    return rows.map((row) => ({
-      EMPLOYEE_ID: row.EMPLOYEE_ID,
-      FULL_NAME: row.FULL_NAME,
-      DEPARTMENT_NAME: row.DEPARTMENT_NAME,
-      SALARY: row.SALARY
-    }))
-  }
+  if (requested.length === 0) return rows
 
   return rows.map((row) => requested.reduce((output, field) => {
     if (row[field] !== undefined) output[field] = row[field]
@@ -212,44 +202,24 @@ export function validateSQL(sql) {
   const tokens = tokenise(sql)
 
   REQUIRED_KEYWORDS.forEach((keyword) => {
-    if (!tokens.includes(keyword)) {
-      errors.push(`Missing keyword: ${keyword}`)
-    }
+    if (!tokens.includes(keyword)) errors.push(`Missing keyword: ${keyword}`)
   })
 
   DANGEROUS_KEYWORDS.forEach((keyword) => {
-    if (tokens.includes(keyword)) {
-      errors.push(`Statement not permitted in BIP: ${keyword}. Only SELECT queries are allowed.`)
-    }
+    if (tokens.includes(keyword)) errors.push(`Statement not permitted in BIP: ${keyword}. Only SELECT queries are allowed.`)
   })
 
   const open = (sql.match(/\(/g) || []).length
   const close = (sql.match(/\)/g) || []).length
-  if (open !== close) {
-    errors.push(`Unmatched parentheses: ${open} opening vs ${close} closing`)
-  }
-
-  if (!sql.toUpperCase().includes('WHERE')) {
-    warnings.push('No WHERE clause detected. In BIP, runtime parameters are usually added through WHERE filters.')
-  }
+  if (open !== close) errors.push(`Unmatched parentheses: ${open} opening vs ${close} closing`)
 
   const binds = extractBindVariables(sql)
-  if (binds.length === 0) {
-    warnings.push('No bind variables found. Data models usually expose :parameters for runtime filtering.')
-  }
-
   const tables = extractTableNames(sql)
-  if (tables.length === 0) {
-    warnings.push(`No recognised HR schema tables found. Available tables: ${KNOWN_TABLES.join(', ')}`)
-  }
 
-  return {
-    valid: errors.length === 0,
-    errors,
-    warnings,
-    tables,
-    binds
-  }
+  if (binds.length === 0) warnings.push('No bind variables found. Oracle BIP data models usually expose :parameters.')
+  if (tables.length === 0) warnings.push(`No recognised Oracle finance tables found. Available tables: ${KNOWN_TABLES.join(', ')}`)
+
+  return { valid: errors.length === 0, errors, warnings, tables, binds }
 }
 
 export function executeSQL(sql, params = {}) {
@@ -272,25 +242,20 @@ export function executeSQL(sql, params = {}) {
 
   try {
     const upper = sql.toUpperCase()
-    let rows
+    let rows = []
 
-    if (
-      upper.includes('DELIVERY_CHANNEL') ||
-      upper.includes('EMAIL_TO') ||
-      upper.includes('OUTPUT_FORMAT') ||
-      upper.includes('"KEY"') ||
-      upper.includes(' AS KEY')
-    ) {
+    if (upper.includes('DELIVERY_CHANNEL') || upper.includes('EMAIL_TO') || upper.includes('OUTPUT_FORMAT')) {
       rows = buildBurstingRows()
-    } else {
-      rows = buildEmployeeRows()
-      rows = applyWhere(rows, sql, params)
-
-      if (upper.includes('COUNT') && upper.includes('AVG') && upper.includes('GROUP BY')) {
-        rows = aggregateDepartmentStats(rows)
-      }
+    } else if (upper.includes('AP_INVOICES_ALL') || upper.includes('AP_PAYMENT_SCHEDULES_ALL') || upper.includes('AP_SUPPLIERS')) {
+      rows = buildApRows()
+    } else if (upper.includes('RA_CUSTOMER_TRX_ALL') || upper.includes('AR_PAYMENT_SCHEDULES_ALL') || upper.includes('HZ_CUST_ACCOUNTS')) {
+      rows = buildArRows()
+    } else if (upper.includes('GL_BALANCES') || upper.includes('GL_CODE_COMBINATIONS') || upper.includes('GL_LEDGERS')) {
+      rows = buildGlRows()
     }
 
+    rows = applyBindFilters(rows, params)
+    rows = applyLiteralFilters(rows, sql)
     rows = applyOrderBy(rows, sql)
     rows = pickColumns(rows, sql)
 
