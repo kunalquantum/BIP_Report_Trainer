@@ -1,9 +1,15 @@
-import { createContext, useContext, useReducer, useEffect } from 'react'
+import { createContext, useContext, useEffect, useReducer } from 'react'
 import { getLevelForPoints } from '../data/levels'
 
-// ─────────────────────────────────────────────
-// Initial State
-// ─────────────────────────────────────────────
+function createScenarioWorkspace() {
+  return {
+    sqlDraft: '',
+    params: {},
+    lastRun: null,
+    lastValidation: null,
+    completedTaskIds: []
+  }
+}
 
 const initialState = {
   user: {
@@ -13,22 +19,17 @@ const initialState = {
     completedScenarios: [],
     quizScores: {}
   },
-  view: 'dashboard',        // dashboard | module | scenario
-  currentModule: null,      // full module object
-  currentStep: 0,           // step index within module
-  currentScenario: null,    // full scenario object
-  currentTask: 0,           // task index within scenario
-  notification: null        // { type: 'success'|'error'|'info', message }
+  view: 'dashboard',
+  currentModule: null,
+  currentStep: 0,
+  currentScenario: null,
+  currentTask: 0,
+  scenarioWorkspace: createScenarioWorkspace(),
+  notification: null
 }
-
-// ─────────────────────────────────────────────
-// Reducer
-// ─────────────────────────────────────────────
 
 function reducer(state, action) {
   switch (action.type) {
-
-    // ── Navigation ──────────────────────────
     case 'SET_VIEW':
       return {
         ...state,
@@ -36,7 +37,6 @@ function reducer(state, action) {
         notification: null
       }
 
-    // ── Module ──────────────────────────────
     case 'START_MODULE':
       return {
         ...state,
@@ -49,10 +49,7 @@ function reducer(state, action) {
     case 'NEXT_STEP':
       return {
         ...state,
-        currentStep: Math.min(
-          state.currentStep + 1,
-          state.currentModule.steps.length - 1
-        )
+        currentStep: Math.min(state.currentStep + 1, state.currentModule.steps.length - 1)
       }
 
     case 'PREV_STEP':
@@ -86,8 +83,8 @@ function reducer(state, action) {
         notification: {
           type: 'success',
           message: alreadyDone
-            ? `Module reviewed. No additional points (already completed).`
-            : `Module complete! +${pointsEarned} points earned.`
+            ? 'Module reviewed. No additional points were awarded.'
+            : `Knowledge track completed. +${pointsEarned} points awarded.`
         }
       }
     }
@@ -104,23 +101,100 @@ function reducer(state, action) {
         }
       }
 
-    // ── Scenario ────────────────────────────
     case 'START_SCENARIO':
       return {
         ...state,
         view: 'scenario',
         currentScenario: action.payload,
         currentTask: 0,
+        scenarioWorkspace: createScenarioWorkspace(),
         notification: null
       }
+
+    case 'EXIT_SCENARIO':
+      return {
+        ...state,
+        view: 'dashboard',
+        currentScenario: null,
+        currentTask: 0,
+        scenarioWorkspace: createScenarioWorkspace(),
+        notification: null
+      }
+
+    case 'SET_SCENARIO_SQL':
+      return {
+        ...state,
+        scenarioWorkspace: {
+          ...state.scenarioWorkspace,
+          sqlDraft: action.payload
+        }
+      }
+
+    case 'SET_SCENARIO_PARAM':
+      return {
+        ...state,
+        scenarioWorkspace: {
+          ...state.scenarioWorkspace,
+          params: {
+            ...state.scenarioWorkspace.params,
+            [action.payload.name]: action.payload.value
+          }
+        }
+      }
+
+    case 'SET_SCENARIO_RUN':
+      return {
+        ...state,
+        scenarioWorkspace: {
+          ...state.scenarioWorkspace,
+          lastRun: action.payload
+        }
+      }
+
+    case 'SET_SCENARIO_VALIDATION':
+      return {
+        ...state,
+        scenarioWorkspace: {
+          ...state.scenarioWorkspace,
+          lastValidation: action.payload
+        }
+      }
+
+    case 'COMPLETE_SCENARIO_TASK': {
+      const taskId = action.payload
+      const completedTaskIds = state.scenarioWorkspace.completedTaskIds.includes(taskId)
+        ? state.scenarioWorkspace.completedTaskIds
+        : [...state.scenarioWorkspace.completedTaskIds, taskId]
+
+      return {
+        ...state,
+        scenarioWorkspace: {
+          ...state.scenarioWorkspace,
+          completedTaskIds
+        }
+      }
+    }
 
     case 'NEXT_TASK':
       return {
         ...state,
-        currentTask: Math.min(
-          state.currentTask + 1,
-          state.currentScenario.tasks.length - 1
-        )
+        currentTask: Math.min(state.currentTask + 1, state.currentScenario.tasks.length - 1),
+        scenarioWorkspace: {
+          ...state.scenarioWorkspace,
+          lastRun: null,
+          lastValidation: null
+        }
+      }
+
+    case 'PREV_TASK':
+      return {
+        ...state,
+        currentTask: Math.max(0, state.currentTask - 1),
+        scenarioWorkspace: {
+          ...state.scenarioWorkspace,
+          lastRun: null,
+          lastValidation: null
+        }
       }
 
     case 'COMPLETE_SCENARIO': {
@@ -132,6 +206,7 @@ function reducer(state, action) {
         view: 'dashboard',
         currentScenario: null,
         currentTask: 0,
+        scenarioWorkspace: createScenarioWorkspace(),
         user: {
           ...state.user,
           points: state.user.points + pointsEarned,
@@ -142,8 +217,8 @@ function reducer(state, action) {
         notification: {
           type: 'success',
           message: alreadyDone
-            ? `Scenario replayed. No additional points (already completed).`
-            : `Scenario passed! +${pointsEarned} points earned.`
+            ? 'Mission replayed. No additional points were awarded.'
+            : `Mission complete. +${pointsEarned} points awarded.`
         }
       }
     }
@@ -157,7 +232,6 @@ function reducer(state, action) {
         }
       }
 
-    // ── Points ──────────────────────────────
     case 'ADD_POINTS':
       return {
         ...state,
@@ -167,7 +241,6 @@ function reducer(state, action) {
         }
       }
 
-    // ── Notification ────────────────────────
     case 'SET_NOTIFICATION':
       return {
         ...state,
@@ -180,7 +253,6 @@ function reducer(state, action) {
         notification: null
       }
 
-    // ── User ────────────────────────────────
     case 'SET_USER_NAME':
       return {
         ...state,
@@ -192,19 +264,16 @@ function reducer(state, action) {
   }
 }
 
-// ─────────────────────────────────────────────
-// Context + Provider
-// ─────────────────────────────────────────────
-
 const TrainerContext = createContext(null)
 
 export function TrainerProvider({ children }) {
-  // Rehydrate from localStorage if available
   const saved = (() => {
     try {
       const raw = localStorage.getItem('bip_trainer_state')
       return raw ? JSON.parse(raw) : null
-    } catch { return null }
+    } catch {
+      return null
+    }
   })()
 
   const [state, dispatch] = useReducer(
@@ -214,14 +283,14 @@ export function TrainerProvider({ children }) {
       : initialState
   )
 
-  // Persist user progress to localStorage on every change
   useEffect(() => {
     try {
       localStorage.setItem('bip_trainer_state', JSON.stringify(state.user))
-    } catch { }
+    } catch {
+      // Ignore storage failures in restricted browsers.
+    }
   }, [state.user])
 
-  // Derived values — computed once here, available everywhere
   const level = getLevelForPoints(state.user.points)
   const isModuleDone = (id) => state.user.completedModules.includes(id)
   const isScenarioDone = (id) => state.user.completedScenarios.includes(id)
@@ -245,10 +314,6 @@ export function TrainerProvider({ children }) {
     </TrainerContext.Provider>
   )
 }
-
-// ─────────────────────────────────────────────
-// Hook
-// ─────────────────────────────────────────────
 
 export function useTrainer() {
   const ctx = useContext(TrainerContext)
